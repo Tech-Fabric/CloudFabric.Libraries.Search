@@ -39,9 +39,9 @@ namespace CloudFabric.Libraries.Search.Indexer
             }
         }
 
-        protected async Task CreateIndex(ISearchIndexer indexer)
+        protected virtual async Task CreateIndex(ISearchIndexer indexer)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException("CreateIndex(ISearchIndexer indexer) needs to be implemented.");
         }
 
         public IndexerProgram(string[] args)
