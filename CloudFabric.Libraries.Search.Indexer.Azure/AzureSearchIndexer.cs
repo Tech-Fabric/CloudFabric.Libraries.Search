@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace CloudFabric.Libraries.Search.Indexer.Azure
 {
-    class AzureSearchIndexer : ISearchIndexer
+    public class AzureSearchIndexer : ISearchIndexer
     {
         private SearchServiceClient _serviceClient;
 
