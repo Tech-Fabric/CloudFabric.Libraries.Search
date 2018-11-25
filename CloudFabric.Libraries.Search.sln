@@ -17,7 +17,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudFabric.Libraries.Searc
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudFabric.Libraries.Search.Harvester", "CloudFabric.Libraries.Search.Harvester\CloudFabric.Libraries.Search.Harvester.csproj", "{EDF205A1-76B1-4857-ADBF-23C99DC56D0C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CloudFabric.Libraries.Search.Harvester.Azure", "CloudFabric.Libraries.Search.Harvester.Azure\CloudFabric.Libraries.Search.Harvester.Azure.csproj", "{8E4ED669-7C7E-4C2B-935F-509F0692DBBB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudFabric.Libraries.Search.Harvester.Azure", "CloudFabric.Libraries.Search.Harvester.Azure\CloudFabric.Libraries.Search.Harvester.Azure.csproj", "{8E4ED669-7C7E-4C2B-935F-509F0692DBBB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CloudFabric.Libraries.Search.Api", "CloudFabric.Libraries.Search.Api\CloudFabric.Libraries.Search.Api.csproj", "{CC15332B-42AD-4943-9153-95D584609D02}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +59,10 @@ Global
 		{8E4ED669-7C7E-4C2B-935F-509F0692DBBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8E4ED669-7C7E-4C2B-935F-509F0692DBBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8E4ED669-7C7E-4C2B-935F-509F0692DBBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC15332B-42AD-4943-9153-95D584609D02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC15332B-42AD-4943-9153-95D584609D02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC15332B-42AD-4943-9153-95D584609D02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC15332B-42AD-4943-9153-95D584609D02}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
