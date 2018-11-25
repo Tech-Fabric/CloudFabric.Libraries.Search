@@ -106,22 +106,34 @@ namespace CloudFabric.Libraries.Search.Attributes
 
         public static TypeCode GetPropertyTypeCode<T>(string propertyName)
         {
+            if (string.IsNullOrEmpty(propertyName))
+            {
+                throw new Exception($"GetPropertyTypeCode: propertyName can't be empty, type: {typeof(T).FullName}");
+            }
+
             PropertyInfo prop = typeof(T).GetProperty(propertyName);
 
-            if(prop == null)
+            if (prop == null)
             {
-                throw new Exception($"GetPropertyTypeCode: can't find property {propertyName} on type {typeof(T).Name}");
+                throw new Exception($"GetPropertyTypeCode: can't find property {propertyName} on type {typeof(T).FullName}");
             }
 
-            if (prop.PropertyType.IsGenericType)
+            try
             {
-                if (prop.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                if (prop.PropertyType.IsGenericType)
                 {
-                    return Type.GetTypeCode(prop.PropertyType.GetGenericArguments()[0]);
+                    if (prop.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    {
+                        return Type.GetTypeCode(prop.PropertyType.GetGenericArguments()[0]);
+                    }
                 }
-            }
 
-            return Type.GetTypeCode(prop.PropertyType);
+                return Type.GetTypeCode(prop.PropertyType);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Failed to get property type code for property {propertyName} on type {typeof(T).FullName}", ex);
+            }
         }
     }
 }
