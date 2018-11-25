@@ -108,6 +108,11 @@ namespace CloudFabric.Libraries.Search.Attributes
         {
             PropertyInfo prop = typeof(T).GetProperty(propertyName);
 
+            if(prop == null)
+            {
+                throw new Exception($"GetPropertyTypeCode: can't find property {propertyName} on type {typeof(T).Name}");
+            }
+
             if (prop.PropertyType.IsGenericType)
             {
                 if (prop.PropertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
