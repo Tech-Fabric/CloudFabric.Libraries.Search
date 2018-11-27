@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace CloudFabric.Libraries.Search
 {
@@ -45,6 +47,69 @@ namespace CloudFabric.Libraries.Search
         public List<FilterConnector> Filters = new List<FilterConnector>();
 
         public Filter() { }
+
+        public static Filter Where<T>(Expression<Func<T, bool>> expression, string tag = "")
+        {
+            if (expression.NodeType == ExpressionType.Lambda)
+            {
+                var filter = ConstructFilterFromExpression(expression.Body);
+
+                filter.Tag = tag;
+
+                return filter;
+            }
+
+            throw new Exception($"Unsupported expression type: {expression.NodeType}");
+        }
+
+        private static Filter ConstructFilterFromExpression(Expression expression)
+        {
+            switch (expression.NodeType)
+            {
+                case ExpressionType.Equal:
+                    var filterEq = new Filter();
+                    filterEq.Operator = FilterOperator.Equal;
+                    filterEq.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
+                    filterEq.Value = ((expression as BinaryExpression).Right as ConstantExpression).Value;
+                    return filterEq;
+                case ExpressionType.GreaterThan:
+                    var filterGt = new Filter();
+                    filterGt.Operator = FilterOperator.Greater;
+                    filterGt.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
+                    filterGt.Value = ((expression as BinaryExpression).Right as ConstantExpression).Value;
+                    return filterGt;
+                case ExpressionType.GreaterThanOrEqual:
+                    var filterGe = new Filter();
+                    filterGe.Operator = FilterOperator.GreaterOrEqual;
+                    filterGe.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
+                    filterGe.Value = ((expression as BinaryExpression).Right as ConstantExpression).Value;
+                    return filterGe;
+                case ExpressionType.LessThan:
+                    var filterLt = new Filter();
+                    filterLt.Operator = FilterOperator.Lower;
+                    filterLt.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
+                    filterLt.Value = ((expression as BinaryExpression).Right as ConstantExpression).Value;
+                    return filterLt;
+                case ExpressionType.LessThanOrEqual:
+                    var filterLe = new Filter();
+                    filterLe.Operator = FilterOperator.LowerOrEqual;
+                    filterLe.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
+                    filterLe.Value = ((expression as BinaryExpression).Right as ConstantExpression).Value;
+                    return filterLe;
+                case ExpressionType.AndAlso:
+                    var leftAnd = ConstructFilterFromExpression((expression as BinaryExpression).Left);
+                    var rightAnd = ConstructFilterFromExpression((expression as BinaryExpression).Right);
+
+                    return leftAnd.And(rightAnd);
+                case ExpressionType.OrElse:
+                    var leftOr = ConstructFilterFromExpression((expression as BinaryExpression).Left);
+                    var rightOr = ConstructFilterFromExpression((expression as BinaryExpression).Right);
+
+                    return leftOr.Or(rightOr);
+                default:
+                    throw new Exception($"Unsupported expression type: {expression.NodeType}");
+            }
+        }
 
         /// <summary>
         /// Creates empty filter with specified tag. 

@@ -1,5 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.ApplicationInsights;
+using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -11,10 +14,12 @@ namespace CloudFabric.Libraries.Search.Api
     {
         protected static HttpClient _httpClient;
         protected string _baseAddress;
+        protected TelemetryClient _telemetryClient;
 
-        public SearchApiClient(string baseAddress, HttpClient httpClient = null)
+        public SearchApiClient(string baseAddress, HttpClient httpClient = null, TelemetryClient telemetryClient = null)
         {
             _baseAddress = baseAddress;
+            _telemetryClient = telemetryClient;
 
             if (httpClient != null)
             {
@@ -32,11 +37,30 @@ namespace CloudFabric.Libraries.Search.Api
         private async Task<string>
             PerformGetRequest(string query)
         {
-            var result = await _httpClient.GetAsync(query);
+            try
+            {
+                var result = await _httpClient.GetAsync(query);
 
-            var response = await result.Content.ReadAsStringAsync();
+                var response = await result.Content.ReadAsStringAsync();
 
-            return response;
+                return response;
+            }
+            catch (Exception ex)
+            {
+                var exception = new Exception("Failed to get data from search service", ex);
+                if (_telemetryClient != null)
+                {
+                    _telemetryClient.TrackException(
+                        ex,
+                        new Dictionary<string, string>() {
+                            { "searchQuery", query },
+                            { "searchBaseAddress", _httpClient.BaseAddress.ToString() }
+                        }
+                    );
+                }
+
+                throw ex;
+            }
         }
 
         public async Task<SearchApiResponse<ResultRecordT>>
@@ -44,7 +68,25 @@ namespace CloudFabric.Libraries.Search.Api
         {
             var response = await PerformGetRequest("get_by_id?id=" + id);
 
-            return JsonConvert.DeserializeObject<SearchApiResponse<ResultRecordT>>(response);
+            try
+            {
+                return JsonConvert.DeserializeObject<SearchApiResponse<ResultRecordT>>(response);
+            } catch(Exception ex)
+            {
+                var exception = new Exception("Failed to get data from search service", ex);
+                if (_telemetryClient != null)
+                {
+                    _telemetryClient.TrackException(
+                        ex,
+                        new Dictionary<string, string>() {
+                            { "id", id },
+                            { "searchBaseAddress", _httpClient.BaseAddress.ToString() }
+                        }
+                    );
+                }
+
+                throw ex;
+            }
         }
 
         public async Task<SearchApiResponse<ResultRecordT>>
