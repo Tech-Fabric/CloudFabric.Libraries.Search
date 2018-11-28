@@ -11,5 +11,7 @@ namespace CloudFabric.Libraries.Search.Api
         public List<SearchResultRecord<ResponseRecordT>> Records { get; set; }
 
         public long? TotalRecordsFound { get; set; }
+
+        public Dictionary<string, List<FacetStats>> FacetsStats = new Dictionary<string, List<FacetStats>>();
     }
 }
