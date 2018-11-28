@@ -2,7 +2,6 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -71,16 +70,18 @@ namespace CloudFabric.Libraries.Search.Api
             try
             {
                 return JsonConvert.DeserializeObject<SearchApiResponse<ResultRecordT>>(response);
-            } catch(Exception ex)
+            }
+            catch (Exception ex)
             {
-                var exception = new Exception("Failed to get data from search service", ex);
+                var exception = new Exception("Failed to deserialize search response", ex);
                 if (_telemetryClient != null)
                 {
                     _telemetryClient.TrackException(
                         ex,
                         new Dictionary<string, string>() {
-                            { "id", id },
-                            { "searchBaseAddress", _httpClient.BaseAddress.ToString() }
+                            { "searchForId", id },
+                            { "searchBaseAddress", _httpClient.BaseAddress.ToString() },
+                            { "searchResponse", response }
                         }
                     );
                 }
@@ -94,12 +95,32 @@ namespace CloudFabric.Libraries.Search.Api
         {
             if (ids == null || ids.Length < 1)
             {
-                throw new ArgumentNullException();
+                throw new ArgumentNullException("ids");
             }
 
             var response = await PerformGetRequest("get_by_ids?ids=" + string.Join(",", ids));
 
-            return JsonConvert.DeserializeObject<SearchApiResponse<ResultRecordT>>(response);
+            try
+            {
+                return JsonConvert.DeserializeObject<SearchApiResponse<ResultRecordT>>(response);
+            }
+            catch (Exception ex)
+            {
+                var exception = new Exception("Failed to deserialize search response", ex);
+                if (_telemetryClient != null)
+                {
+                    _telemetryClient.TrackException(
+                        ex,
+                        new Dictionary<string, string>() {
+                            { "searchForIds", string.Join(",", ids) },
+                            { "searchBaseAddress", _httpClient.BaseAddress.ToString() },
+                            { "searchResponse", response }
+                        }
+                    );
+                }
+
+                throw ex;
+            }
         }
 
         public async Task<SearchApiResponse<ResultRecordT>> Search(SearchApiRequest request)
@@ -112,7 +133,27 @@ namespace CloudFabric.Libraries.Search.Api
 
             var response = await result.Content.ReadAsStringAsync();
 
-            return JsonConvert.DeserializeObject<SearchApiResponse<ResultRecordT>>(response);
+            try
+            {
+                return JsonConvert.DeserializeObject<SearchApiResponse<ResultRecordT>>(response);
+            }
+            catch (Exception ex)
+            {
+                var exception = new Exception("Failed to deserialize search response", ex);
+                if (_telemetryClient != null)
+                {
+                    _telemetryClient.TrackException(
+                        ex,
+                        new Dictionary<string, string>() {
+                            { "searchRequest", dataAsString },
+                            { "searchBaseAddress", _httpClient.BaseAddress.ToString() },
+                            { "searchResponse", response }
+                        }
+                    );
+                }
+
+                throw ex;
+            }
         }
     }
 }
