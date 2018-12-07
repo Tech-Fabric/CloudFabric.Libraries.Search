@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace CloudFabric.Libraries.Search
 {
@@ -62,11 +63,39 @@ namespace CloudFabric.Libraries.Search
             throw new Exception($"Unsupported expression type: {expression.NodeType}");
         }
 
+        private static object GetMemberAccessValue(MemberExpression memberExpression)
+        {
+            MemberInfo memberInfo = memberExpression.Member;
+
+            if (memberInfo.MemberType == MemberTypes.Field)
+            {
+                FieldInfo fieldInfo = (FieldInfo)memberInfo;
+                var expressionValue = (memberExpression.Expression as ConstantExpression).Value;
+                var fieldValue = fieldInfo.GetValue(expressionValue);
+                return fieldValue;
+            }
+            else if (memberInfo.MemberType == MemberTypes.Property)
+            {
+                PropertyInfo propertyInfo = (PropertyInfo)memberInfo;
+                var expressionValue = (memberExpression.Expression as ConstantExpression).Value;
+                var fieldValue = propertyInfo.GetValue(expressionValue);
+                return fieldValue;
+            }
+            else
+            {
+                throw new Exception($"Expression member type is not supported: {memberInfo.MemberType}");
+            }
+        }
+
         private static object GetExpressionValue(Expression expression)
         {
             if (expression.NodeType == ExpressionType.Constant)
             {
                 return (expression as ConstantExpression).Value;
+            }
+            else if(expression.NodeType == ExpressionType.MemberAccess)
+            {
+                return GetMemberAccessValue(expression as MemberExpression);
             }
             else if (expression.NodeType == ExpressionType.Convert)
             {
@@ -76,7 +105,10 @@ namespace CloudFabric.Libraries.Search
                     targetType = Nullable.GetUnderlyingType(targetType);
                 }
 
-                return Convert.ChangeType(((expression as UnaryExpression).Operand as ConstantExpression).Value, targetType);
+                var operand = (expression as UnaryExpression).Operand;
+                object expressionValue = GetExpressionValue(operand);
+
+                return Convert.ChangeType(expressionValue, targetType);
             }
             else
             {

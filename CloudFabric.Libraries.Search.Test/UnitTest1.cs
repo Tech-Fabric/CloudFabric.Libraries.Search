@@ -44,6 +44,12 @@ namespace CloudFabric.Libraries.Search.Test
 
             Assert.IsTrue(filter.PropertyName == "TestNullableInt");
             Assert.IsTrue((int)filter.Value == 3);
+
+            var value = 4 + 1;
+            var filter2 = Filter.Where<TestModel>(o => o.TestNullableInt == value);
+
+            Assert.IsTrue(filter2.PropertyName == "TestNullableInt");
+            Assert.IsTrue((int)filter2.Value == 5);
         }
     }
 }
