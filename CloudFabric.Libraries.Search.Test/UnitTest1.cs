@@ -9,6 +9,8 @@ namespace CloudFabric.Libraries.Search.Test
         public string Id { get; set; }
         public bool IsActive { get; set; }
         public string Name { get; set; }
+
+        public int? TestNullableInt { get; set; }
     }
 
     [TestClass]
@@ -33,6 +35,15 @@ namespace CloudFabric.Libraries.Search.Test
 
             Assert.IsTrue(filter3.PropertyName == "IsActive");
             Assert.IsTrue((bool)filter3.Value == true);
+        }
+
+        [TestMethod]
+        public void TestNullableInt()
+        {
+            var filter = Filter.Where<TestModel>(o => o.TestNullableInt == 3);
+
+            Assert.IsTrue(filter.PropertyName == "TestNullableInt");
+            Assert.IsTrue((int)filter.Value == 3);
         }
     }
 }

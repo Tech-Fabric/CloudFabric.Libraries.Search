@@ -62,6 +62,28 @@ namespace CloudFabric.Libraries.Search
             throw new Exception($"Unsupported expression type: {expression.NodeType}");
         }
 
+        private static object GetExpressionValue(Expression expression)
+        {
+            if (expression.NodeType == ExpressionType.Constant)
+            {
+                return (expression as ConstantExpression).Value;
+            }
+            else if (expression.NodeType == ExpressionType.Convert)
+            {
+                var targetType = (expression as UnaryExpression).Type;
+                if (targetType.IsGenericType && targetType.GetGenericTypeDefinition().Equals(typeof(Nullable<>)))
+                {
+                    targetType = Nullable.GetUnderlyingType(targetType);
+                }
+
+                return Convert.ChangeType(((expression as UnaryExpression).Operand as ConstantExpression).Value, targetType);
+            }
+            else
+            {
+                throw new Exception($"Cannot get value from expression of type {expression.NodeType.ToString()}");
+            }
+        }
+
         private static Filter ConstructFilterFromExpression(Expression expression)
         {
             switch (expression.NodeType)
@@ -70,31 +92,31 @@ namespace CloudFabric.Libraries.Search
                     var filterEq = new Filter();
                     filterEq.Operator = FilterOperator.Equal;
                     filterEq.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
-                    filterEq.Value = ((expression as BinaryExpression).Right as ConstantExpression).Value;
+                    filterEq.Value = GetExpressionValue((expression as BinaryExpression).Right);
                     return filterEq;
                 case ExpressionType.GreaterThan:
                     var filterGt = new Filter();
                     filterGt.Operator = FilterOperator.Greater;
                     filterGt.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
-                    filterGt.Value = ((expression as BinaryExpression).Right as ConstantExpression).Value;
+                    filterGt.Value = GetExpressionValue((expression as BinaryExpression).Right);
                     return filterGt;
                 case ExpressionType.GreaterThanOrEqual:
                     var filterGe = new Filter();
                     filterGe.Operator = FilterOperator.GreaterOrEqual;
                     filterGe.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
-                    filterGe.Value = ((expression as BinaryExpression).Right as ConstantExpression).Value;
+                    filterGe.Value = GetExpressionValue((expression as BinaryExpression).Right);
                     return filterGe;
                 case ExpressionType.LessThan:
                     var filterLt = new Filter();
                     filterLt.Operator = FilterOperator.Lower;
                     filterLt.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
-                    filterLt.Value = ((expression as BinaryExpression).Right as ConstantExpression).Value;
+                    filterLt.Value = GetExpressionValue((expression as BinaryExpression).Right);
                     return filterLt;
                 case ExpressionType.LessThanOrEqual:
                     var filterLe = new Filter();
                     filterLe.Operator = FilterOperator.LowerOrEqual;
                     filterLe.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
-                    filterLe.Value = ((expression as BinaryExpression).Right as ConstantExpression).Value;
+                    filterLe.Value = GetExpressionValue((expression as BinaryExpression).Right);
                     return filterLe;
                 case ExpressionType.AndAlso:
                     var leftAnd = ConstructFilterFromExpression((expression as BinaryExpression).Left);
