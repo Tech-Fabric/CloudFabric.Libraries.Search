@@ -63,30 +63,6 @@ namespace CloudFabric.Libraries.Search
             throw new Exception($"Unsupported expression type: {expression.NodeType}");
         }
 
-        private static object GetMemberAccessValue(MemberExpression memberExpression)
-        {
-            MemberInfo memberInfo = memberExpression.Member;
-
-            if (memberInfo.MemberType == MemberTypes.Field)
-            {
-                FieldInfo fieldInfo = (FieldInfo)memberInfo;
-                var expressionValue = (memberExpression.Expression as ConstantExpression).Value;
-                var fieldValue = fieldInfo.GetValue(expressionValue);
-                return fieldValue;
-            }
-            else if (memberInfo.MemberType == MemberTypes.Property)
-            {
-                PropertyInfo propertyInfo = (PropertyInfo)memberInfo;
-                var expressionValue = (memberExpression.Expression as ConstantExpression).Value;
-                var fieldValue = propertyInfo.GetValue(expressionValue);
-                return fieldValue;
-            }
-            else
-            {
-                throw new Exception($"Expression member type is not supported: {memberInfo.MemberType}");
-            }
-        }
-
         private static object GetExpressionValue(Expression expression)
         {
             if (expression.NodeType == ExpressionType.Constant)
@@ -95,7 +71,35 @@ namespace CloudFabric.Libraries.Search
             }
             else if(expression.NodeType == ExpressionType.MemberAccess)
             {
-                return GetMemberAccessValue(expression as MemberExpression);
+                MemberInfo memberInfo = (expression as MemberExpression).Member;
+                if (memberInfo.MemberType == MemberTypes.Field)
+                {
+                    FieldInfo fieldInfo = (FieldInfo)memberInfo;
+                    var expressionValue = GetExpressionValue((expression as MemberExpression).Expression);
+                    var fieldValue = fieldInfo.GetValue(expressionValue);
+                    return fieldValue;
+                }
+                else if (memberInfo.MemberType == MemberTypes.Property)
+                {
+                    // property is just a wrapper around field right?
+                    PropertyInfo propertyInfo = (PropertyInfo)memberInfo;
+                    var propertyValue = GetExpressionValue((expression as MemberExpression).Expression);
+                    var fieldValue = propertyInfo.GetValue(propertyValue);
+                    return fieldValue;
+                }
+                else
+                {
+                    throw new Exception($"Expression member type is not supported: {memberInfo.MemberType}");
+                }
+            }
+            else if(expression.NodeType == ExpressionType.Call)
+            {
+                var methodCallExpression = (MethodCallExpression)expression;
+
+                object[] args = methodCallExpression.Arguments.Select(e => GetExpressionValue(e)).ToArray();
+                var obj = methodCallExpression.Object == null ? null : GetExpressionValue(methodCallExpression.Object);
+                var result = methodCallExpression.Method.Invoke(obj, args);
+                return result;
             }
             else if (expression.NodeType == ExpressionType.Convert)
             {
