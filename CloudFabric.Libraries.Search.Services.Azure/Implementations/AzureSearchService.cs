@@ -155,7 +155,10 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
             Type resultType = typeof(ResultT);
             MemberInfo[] props = resultType.GetMembers();
             List<string> propertiesToSelect = props
-                .Where(p => p.MemberType == MemberTypes.Field || p.MemberType == MemberTypes.Property)
+                .Where(p => 
+                    (p.MemberType == MemberTypes.Field || p.MemberType == MemberTypes.Property) && 
+                    p.GetCustomAttributes(typeof(IgnorePropertyAttribute), true).Length == 0
+                )
                 .Select(p => p.Name)
                 .ToList();
 
@@ -164,7 +167,6 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
                 Select = propertiesToSelect,
                 SearchMode = SearchMode.Any,
                 QueryType = QueryType.Full,
-                //ScoringProfile = "products",
                 Top = searchRequest.Limit,
                 Skip = searchRequest.Offset,
                 // Add count
@@ -379,8 +381,7 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
                     break;
                 case TypeCode.DateTime:
                     DateTime dt = (DateTime)filter.Value;
-                    var pacific = TimeZoneInfo.ConvertTimeFromUtc(dt, TimeZoneInfo.FindSystemTimeZoneById("Pacific Standard Time"));
-                    filterValue += $"{pacific.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")}";
+                    filterValue += $"{dt.ToString("yyyy-MM-ddTHH:mm:ss.fffZ")}";
                     break;
             }
 
