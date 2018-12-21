@@ -130,6 +130,12 @@ namespace CloudFabric.Libraries.Search
                     filterEq.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
                     filterEq.Value = GetExpressionValue((expression as BinaryExpression).Right);
                     return filterEq;
+                case ExpressionType.NotEqual:
+                    var filterNEq = new Filter();
+                    filterNEq.Operator = FilterOperator.NotEqual;
+                    filterNEq.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
+                    filterNEq.Value = GetExpressionValue((expression as BinaryExpression).Right);
+                    return filterNEq;
                 case ExpressionType.GreaterThan:
                     var filterGt = new Filter();
                     filterGt.Operator = FilterOperator.Greater;

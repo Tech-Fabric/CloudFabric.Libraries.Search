@@ -138,5 +138,18 @@ namespace CloudFabric.Libraries.Search.Test
             Assert.IsTrue(filter.PropertyName == "Name");
             Assert.IsTrue(filter.Value.ToString() == "test5");
         }
+
+        [TestMethod]
+        public void TestNotEqual()
+        {
+            var testRequest = new TestRequest();
+
+            var filter = Filter.Where<TestModel>(
+                o => o.Name != TestRequest.StaticMethod("5"));
+
+            Assert.IsTrue(filter.PropertyName == "Name");
+            Assert.IsTrue(filter.Operator == "ne");
+            Assert.IsTrue(filter.Value.ToString() == "test5");
+        }
     }
 }
