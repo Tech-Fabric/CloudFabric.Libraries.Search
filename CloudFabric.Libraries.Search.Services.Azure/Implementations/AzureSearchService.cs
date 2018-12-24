@@ -370,11 +370,16 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
                     break;
                 case TypeCode.Char:
                 case TypeCode.String:
-                    var v = filter.Value.ToString();
-
-                    v = v.Replace("'", "''");
-
-                    filterValue += $"'{v}'";
+                    if (filter.Value == null)
+                    {
+                        filterValue += "''";
+                    }
+                    else
+                    {
+                        var v = filter.Value.ToString();
+                        v = v.Replace("'", "''");
+                        filterValue += $"'{v}'";
+                    }
                     break;
                 case TypeCode.Boolean:
                     filterValue += $"{filter.Value.ToString().ToLower()}";
