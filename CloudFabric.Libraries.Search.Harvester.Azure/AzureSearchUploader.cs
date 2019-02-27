@@ -114,6 +114,73 @@ namespace CloudFabric.Libraries.Search.Harvester.Azure
 
                 return true;
             }
+
         }
+
+        public bool Delete<T>(IEnumerable<string> idList) where T : class
+        {
+            using (var operation = _telemetryClient.StartOperation<RequestTelemetry>("deleteSearchRecords"))
+            {
+                var indexName = SearchableModelAttribute.GetIndexName(typeof(T));
+                string keyName = SearchableModelAttribute.GetKeyPropertyName<T>();
+
+                if (_indexMapping.ContainsKey(indexName))
+                {
+                    indexName = _indexMapping[indexName];
+                }
+
+                ISearchIndexClient indexClient = null;
+
+                if (_indexClients.ContainsKey(indexName))
+                {
+                    indexClient = _indexClients[indexName];
+                }
+                else
+                {
+                    indexClient = _serviceClient.Indexes.GetClient(indexName);
+                    _indexClients.Add(indexName, indexClient);
+                }
+
+                if (indexClient == null)
+                {
+                    throw new Exception("Failed to get indexClient. Make sure index exists.");
+                }
+
+                //Deleting 1000 records at a time using IndexBatch
+                var recordsInOneStep = 1000;
+                var totalRecords = idList.Count();
+                var deletedRecords = 0;
+                _telemetryClient.TrackMetric("azureSearchChunkDeleteItems", totalRecords);
+
+                while (deletedRecords < totalRecords)
+                {
+                    var deleteStartTime = DateTime.UtcNow;
+
+                    var recordsToDelete = idList.Skip(deletedRecords).Take(recordsInOneStep);
+
+                    var indexBatchAction = IndexBatch.Delete(keyName, recordsToDelete);                                       
+
+                    try
+                    {
+                        indexClient.Documents.Index(indexBatchAction);
+                    }
+                    catch (IndexBatchException e)
+                    {
+                        _telemetryClient.TrackException(e);
+                        return false;
+                    }
+                    
+                    var deleteTime = DateTime.UtcNow - deleteStartTime;
+
+                    _telemetryClient.TrackMetric("azureSearchChunkDeleteTime", deleteTime.TotalMilliseconds);
+
+                    deletedRecords += recordsToDelete.Count();
+
+                }
+
+                return true;
+            }
+        }
+
     }
 }
