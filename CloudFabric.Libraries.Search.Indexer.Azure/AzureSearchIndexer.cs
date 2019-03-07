@@ -151,7 +151,7 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
                                     }
                                     break;
                                 case TypeCode.Object:
-                                    var elementType = propertyType.GetType().GetElementType();
+                                    var elementType = propertyType.GetElementType();
                                     if (Type.GetTypeCode(elementType) != TypeCode.String)
                                     {
                                         throw new Exception("Unsupported array element type!");
