@@ -150,6 +150,18 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
                                         field.Analyzer = "standardasciifolding.lucene";
                                     }
                                     break;
+                                case TypeCode.Object:
+                                    var elementType = propertyType.GetType().GetElementType();
+                                    if (Type.GetTypeCode(elementType) != TypeCode.String)
+                                    {
+                                        throw new Exception("Unsupported array element type!");
+                                    }
+                                    field.Type = DataType.Collection(DataType.String);
+                                    if (propertyAttribute.IsSearchable && !propertyAttribute.UseForSuggestions) // Azure search doesn't support custom analyzer on fields enabled for suggestions
+                                    {
+                                        field.Analyzer = "standardasciifolding.lucene";
+                                    }
+                                    break;
                                 case TypeCode.DateTime:
                                     field.Type = DataType.DateTimeOffset;
                                     break;
