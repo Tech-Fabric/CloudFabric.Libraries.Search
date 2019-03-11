@@ -366,7 +366,14 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
                 case TypeCode.Int32:
                 case TypeCode.Int64:
                 case TypeCode.Byte:
-                    filterValue += $"{filter.Value}";
+                    if (filter.Value == null)
+                    {
+                        filterValue += "null";
+                    }
+                    else
+                    {
+                        filterValue += $"{filter.Value}";
+                    }
                     break;
                 case TypeCode.Char:
                 case TypeCode.String:
