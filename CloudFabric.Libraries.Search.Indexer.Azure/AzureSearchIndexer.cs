@@ -169,6 +169,19 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
                                     throw new Exception($"Azure Search doesn't support {propertyType.Name} type.");
                             }
 
+                            if (propertyAttribute.Analyzer != "")
+                            {
+                                field.Analyzer = propertyAttribute.Analyzer;
+                            }
+                            if (propertyAttribute.SearchAnalyzer != "")
+                            {
+                                field.SearchAnalyzer = propertyAttribute.SearchAnalyzer;
+                            }
+                            if (propertyAttribute.IndexAnalyzer != "")
+                            {
+                                field.IndexAnalyzer = propertyAttribute.IndexAnalyzer;
+                            }
+
                             field.IsKey = propertyAttribute.IsKey;
                             field.IsFilterable = propertyAttribute.IsFilterable;
                             field.IsSortable = propertyAttribute.IsSortable;
