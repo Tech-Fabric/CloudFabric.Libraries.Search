@@ -339,6 +339,7 @@ namespace CloudFabric.Libraries.Search
         public List<string> FieldsToHighlight = new List<string>();
         public string ScoringProfile;
         public List<FacetInfoRequest> FacetInfoToReturn = new List<FacetInfoRequest>();
+        public string SearchMode;
 
         /// <summary>
         /// List of filters. All filters will be joined by AND.

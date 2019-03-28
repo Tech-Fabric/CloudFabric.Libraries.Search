@@ -165,7 +165,7 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
             SearchParameters sp = new SearchParameters()
             {
                 Select = propertiesToSelect,
-                SearchMode = SearchMode.Any,
+                SearchMode = searchRequest.SearchMode == "All" ? SearchMode.All : SearchMode.Any,
                 QueryType = QueryType.Full,
                 Top = searchRequest.Limit,
                 Skip = searchRequest.Offset,
