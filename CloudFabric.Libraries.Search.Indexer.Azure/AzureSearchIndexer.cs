@@ -173,13 +173,17 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
                             {
                                 field.Analyzer = propertyAttribute.Analyzer;
                             }
-                            if (propertyAttribute.SearchAnalyzer != null && propertyAttribute.SearchAnalyzer != "")
+                            //SearchAnalyzer & IndexAnalyzer should be specified together
+                            if (!string.IsNullOrWhiteSpace(propertyAttribute.SearchAnalyzer) && !string.IsNullOrWhiteSpace(propertyAttribute.IndexAnalyzer))
                             {
                                 field.SearchAnalyzer = propertyAttribute.SearchAnalyzer;
-                            }
-                            if (propertyAttribute.IndexAnalyzer != null && propertyAttribute.IndexAnalyzer != "")
-                            {
                                 field.IndexAnalyzer = propertyAttribute.IndexAnalyzer;
+                            }
+                            else if ((string.IsNullOrWhiteSpace(propertyAttribute.SearchAnalyzer) && !string.IsNullOrWhiteSpace(propertyAttribute.IndexAnalyzer))
+                                    || (!string.IsNullOrWhiteSpace(propertyAttribute.SearchAnalyzer) && string.IsNullOrWhiteSpace(propertyAttribute.IndexAnalyzer))
+                                    )
+                            {
+                                throw new Exception($"Both SearchAnalyzer & IndexAnalyzer are should be specified together.");
                             }
 
                             field.IsKey = propertyAttribute.IsKey;
