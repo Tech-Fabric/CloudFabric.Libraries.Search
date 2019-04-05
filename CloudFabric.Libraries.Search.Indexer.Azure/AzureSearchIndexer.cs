@@ -145,7 +145,10 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
                                     break;
                                 case TypeCode.String:
                                     field.Type = DataType.String;
-                                    if (propertyAttribute.IsSearchable && !propertyAttribute.UseForSuggestions) // Azure search doesn't support custom analyzer on fields enabled for suggestions
+                                    if (propertyAttribute.IsSearchable && !propertyAttribute.UseForSuggestions
+                                        && string.IsNullOrWhiteSpace(propertyAttribute.SearchAnalyzer) && string.IsNullOrWhiteSpace(propertyAttribute.IndexAnalyzer)) 
+                                        // Azure search doesn't support custom analyzer on fields enabled for suggestions
+                                        // If Search & IndexAnalyzers are specified, we cannot set Analyzer
                                     {
                                         field.Analyzer = "standardasciifolding.lucene";
                                     }
