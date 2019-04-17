@@ -379,7 +379,7 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
                 case TypeCode.String:
                     if (filter.Value == null)
                     {
-                        filterValue += "''";
+                        filterValue += "null";
                     }
                     else
                     {
