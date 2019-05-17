@@ -6,6 +6,6 @@ namespace CloudFabric.Libraries.Search.Indexer
     public interface ISearchIndexer
     {
         Task CreateSynonymMaps(Dictionary<string, List<string>> synonymMaps);
-        Task<bool> CreateIndex<T>() where T : class;
+        Task<bool> CreateIndex<T>(string newIndexName = null) where T : class;
     }
 }

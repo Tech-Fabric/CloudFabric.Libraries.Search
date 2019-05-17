@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2003
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.202
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudFabric.Libraries.Search", "CloudFabric.Libraries.Search\CloudFabric.Libraries.Search.csproj", "{BF35156A-744D-4FDF-A408-C045A89D259A}"
 EndProject
@@ -21,7 +21,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudFabric.Libraries.Searc
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudFabric.Libraries.Search.Api", "CloudFabric.Libraries.Search.Api\CloudFabric.Libraries.Search.Api.csproj", "{CC15332B-42AD-4943-9153-95D584609D02}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CloudFabric.Libraries.Search.Test", "CloudFabric.Libraries.Search.Test\CloudFabric.Libraries.Search.Test.csproj", "{D3AE9E30-6047-4E25-B25A-A77DA6C5B3B5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudFabric.Libraries.Search.Test", "CloudFabric.Libraries.Search.Test\CloudFabric.Libraries.Search.Test.csproj", "{D3AE9E30-6047-4E25-B25A-A77DA6C5B3B5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudFabric.Libraries.Search.Services.ES", "CloudFabric.Libraries.Search.Services.ES\CloudFabric.Libraries.Search.Services.ES.csproj", "{1D961FB3-19AE-4C6C-91DA-1011EEEB5B01}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CloudFabric.Libraries.Search.Indexer.ES", "CloudFabric.Libraries.Search.Indexer.ES\CloudFabric.Libraries.Search.Indexer.ES.csproj", "{57B0E623-1F31-4414-B0D1-BEB911E5C313}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CloudFabric.Libraries.Search.Harvester.ES", "CloudFabric.Libraries.Search.Harvester.ES\CloudFabric.Libraries.Search.Harvester.ES.csproj", "{94B4C447-DE18-4673-9C05-3ACAAA58E566}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -69,6 +75,18 @@ Global
 		{D3AE9E30-6047-4E25-B25A-A77DA6C5B3B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D3AE9E30-6047-4E25-B25A-A77DA6C5B3B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D3AE9E30-6047-4E25-B25A-A77DA6C5B3B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D961FB3-19AE-4C6C-91DA-1011EEEB5B01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D961FB3-19AE-4C6C-91DA-1011EEEB5B01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D961FB3-19AE-4C6C-91DA-1011EEEB5B01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D961FB3-19AE-4C6C-91DA-1011EEEB5B01}.Release|Any CPU.Build.0 = Release|Any CPU
+		{57B0E623-1F31-4414-B0D1-BEB911E5C313}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57B0E623-1F31-4414-B0D1-BEB911E5C313}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57B0E623-1F31-4414-B0D1-BEB911E5C313}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57B0E623-1F31-4414-B0D1-BEB911E5C313}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94B4C447-DE18-4673-9C05-3ACAAA58E566}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94B4C447-DE18-4673-9C05-3ACAAA58E566}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94B4C447-DE18-4673-9C05-3ACAAA58E566}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94B4C447-DE18-4673-9C05-3ACAAA58E566}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

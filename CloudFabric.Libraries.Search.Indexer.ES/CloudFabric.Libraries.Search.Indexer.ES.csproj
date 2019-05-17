@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NEST" Version="7.0.0-alpha2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CloudFabric.Libraries.Search.Attributes\CloudFabric.Libraries.Search.Attributes.csproj" />
+    <ProjectReference Include="..\CloudFabric.Libraries.Search.Indexer\CloudFabric.Libraries.Search.Indexer.csproj" />
+    <ProjectReference Include="..\CloudFabric.Libraries.Search\CloudFabric.Libraries.Search.csproj" />
+  </ItemGroup>
+
+</Project>
