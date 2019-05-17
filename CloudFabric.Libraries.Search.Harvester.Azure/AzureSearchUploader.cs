@@ -6,6 +6,7 @@ using Microsoft.Azure.Search.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace CloudFabric.Libraries.Search.Harvester.Azure
 {
@@ -36,7 +37,7 @@ namespace CloudFabric.Libraries.Search.Harvester.Azure
             }
         }
 
-        public bool Upload<T>(IEnumerable<T> records) where T : class
+        public async Task<bool> Upload<T>(IEnumerable<T> records) where T : class
         {
             using (var operation = _telemetryClient.StartOperation<RequestTelemetry>("uploadSearchRecords"))
             {

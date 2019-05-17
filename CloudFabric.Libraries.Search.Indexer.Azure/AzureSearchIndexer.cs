@@ -29,7 +29,7 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
             }
         }
 
-        public async Task<bool> CreateIndex<T>() where T : class
+        public async Task<bool> CreateIndex<T>(string forcedNewIndexName = null) where T : class
         {
             try
             {
@@ -42,8 +42,6 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
 
                 List<ScoringProfile> scoringProfiles = null;
                 string defaultScoringProfile = null;
-
-                string newIndexVersionSuffix = DateTime.Now.ToString("yyyyMMddHHmmss");
 
                 try
                 {
@@ -212,6 +210,7 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
                     }
                 }
 
+                string newIndexVersionSuffix = DateTime.Now.ToString("yyyyMMddHHmmss");
                 string newIndexName = indexName + "-" + newIndexVersionSuffix;
 
                 var definition = new Index()
