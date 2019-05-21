@@ -238,6 +238,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                         var termsAgg = new TermsAggregation(facetProp.Key.Name)
                         {
                             Field = facetProp.Key.Name,
+                            Size = facetInfo.Count,
                             Order = new List<TermsOrder>() {
                             new TermsOrder() { Key = "_count", Order = Nest.SortOrder.Descending }
                             //new TermsOrder() { Key = "_term", Order = Nest.SortOrder.Descending }
