@@ -8,6 +8,8 @@ namespace CloudFabric.Libraries.Search
         public long? Count { get; set; }
         public double? From { get; set; }
         public double? To { get; set; }
+        public string SumByField { get; set; } = null;
+        public double? SumByValue { get; set; }
     }
 
     public class SearchResultRecord<T>

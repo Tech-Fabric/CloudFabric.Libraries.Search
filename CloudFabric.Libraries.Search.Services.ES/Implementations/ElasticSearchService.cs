@@ -55,9 +55,6 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                 return s;
             });
 
-            //UTF8Encoding utf8 = new UTF8Encoding();
-            //var sRequest = searchResponse.ApiCall.RequestBodyInBytes == null ? null : utf8.GetString(searchResponse.ApiCall.RequestBodyInBytes);
-
             SearchResult<ResultT> results = new SearchResult<ResultT>();
 
             results.TotalRecordsFound = searchResponse.Total == -1 ? 0 : searchResponse.Total;
@@ -97,11 +94,19 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                         }
                         else if (item is KeyedBucket<object>)
                         {
-                            facetValues.Add(new FacetStats()
+                            var facetStats = new FacetStats()
                             {
                                 Value = (item as KeyedBucket<object>).Key,
                                 Count = (item as KeyedBucket<object>).DocCount
-                            });
+                            };
+                            string sumByField = (item as Nest.KeyedBucket<object>)?.Keys?.FirstOrDefault();
+                            if (sumByField != null && sumByField != "")
+                            {
+                                facetStats.SumByField = sumByField;
+                                var valueAgg = (ValueAggregate)(item as KeyedBucket<object>).Values.FirstOrDefault();
+                                facetStats.SumByValue = valueAgg.Value;
+                            }
+                            facetValues.Add(facetStats);
                         }
                     }
                 }
@@ -192,9 +197,9 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
 
             if (searchRequest.FacetInfoToReturn != null)
             {
-                foreach (var facetName in searchRequest.FacetInfoToReturn)
+                foreach (var facetInfo in searchRequest.FacetInfoToReturn)
                 {
-                    var facetProp = facetProperties.FirstOrDefault(f => f.Key.Name == facetName.FacetName);
+                    var facetProp = facetProperties.FirstOrDefault(f => f.Key.Name == facetInfo.FacetName);
                     if (facetProp.Key == null)
                     {
                         continue;
@@ -230,16 +235,23 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                     }
                     else
                     {
+                        var termsAgg = new TermsAggregation(facetProp.Key.Name)
+                        {
+                            Field = facetProp.Key.Name,
+                            Order = new List<TermsOrder>() {
+                            new TermsOrder() { Key = "_count", Order = Nest.SortOrder.Descending }
+                            //new TermsOrder() { Key = "_term", Order = Nest.SortOrder.Descending }
+                            }
+                        };
+
+                        if (facetInfo.SumByField != null && facetInfo.SumByField != "")
+                        {
+                            termsAgg.Aggregations = new SumAggregation(facetInfo.SumByField, facetInfo.SumByField);
+                        }
+
                         aggs.Add(
                             facetProp.Key.Name,
-                            new TermsAggregation(facetProp.Key.Name)
-                            {
-                                Field = facetProp.Key.Name,
-                                Order = new List<TermsOrder>() {
-                                new TermsOrder() { Key = "_count", Order = Nest.SortOrder.Descending }
-                                //new TermsOrder() { Key = "_term", Order = Nest.SortOrder.Descending }
-                                }
-                            }
+                            termsAgg
                         );
                     }
                 }

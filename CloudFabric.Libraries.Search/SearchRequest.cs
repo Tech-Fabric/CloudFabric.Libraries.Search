@@ -305,11 +305,12 @@ namespace CloudFabric.Libraries.Search
 
     public class FacetInfoRequest
     {
-        public FacetInfoRequest(string facetName, string sort = "count", int count = 1000)
+        public FacetInfoRequest(string facetName, string sort = "count", int count = 1000, string sumByField = null)
         {
             FacetName = facetName;
             Sort = sort;
             Count = count;
+            SumByField = sumByField;
         }
 
         /// <summary>
@@ -326,6 +327,8 @@ namespace CloudFabric.Libraries.Search
         /// How many facet values to return;
         /// </summary>
         public int Count { get; set; } = 1000;
+
+        public string SumByField { get; set; } = null;
 
         public double[] Values { get; set; } = new double[] { };
     }
