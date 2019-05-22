@@ -200,12 +200,8 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                 foreach (var facetInfo in searchRequest.FacetInfoToReturn)
                 {
                     var facetProp = facetProperties.FirstOrDefault(f => f.Key.Name == facetInfo.FacetName);
-                    if (facetProp.Key == null)
-                    {
-                        continue;
-                    }
 
-                    if (facetProp.Value.FacetableRanges.Length > 0)
+                    if (facetProp.Key != null && facetProp.Value.FacetableRanges.Length > 0)
                     {
                         List<IAggregationRange> ranges = new List<IAggregationRange>();
 
@@ -235,9 +231,9 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                     }
                     else
                     {
-                        var termsAgg = new TermsAggregation(facetProp.Key.Name)
+                        var termsAgg = new TermsAggregation(facetInfo.FacetName)
                         {
-                            Field = facetProp.Key.Name,
+                            Field = facetInfo.FacetName,
                             Size = facetInfo.Count,
                             Order = new List<TermsOrder>() {
                             new TermsOrder() { Key = "_count", Order = Nest.SortOrder.Descending }
@@ -251,7 +247,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                         }
 
                         aggs.Add(
-                            facetProp.Key.Name,
+                            facetInfo.FacetName,
                             termsAgg
                         );
                     }
