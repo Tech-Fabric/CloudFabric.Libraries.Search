@@ -323,6 +323,11 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                     break;
             }
 
+            if (filter.PropertyName.IndexOf(".") != -1)
+            {
+                return $"{filter.PropertyName}{filterOperator}{filter.Value}";
+            }
+
             var filterValue = "";
             switch (SearchableModelAttribute.GetPropertyTypeCode<T>(filter.PropertyName))
             {

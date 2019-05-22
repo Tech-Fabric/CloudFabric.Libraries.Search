@@ -159,6 +159,9 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                                     return p.Name(prop.Name);
                                 });
                                 break;
+                            case TypeCode.Object:
+                                properties = properties.Object<Object>(p => p.Name(prop.Name));
+                                break;
                             default:
                                 throw new Exception(
                                     $"Elastic Search doesn't support {prop.PropertyType.Name} type. TypeCode: {Type.GetTypeCode(prop.PropertyType)}"
