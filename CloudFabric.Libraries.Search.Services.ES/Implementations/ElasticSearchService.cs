@@ -355,7 +355,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                     case TypeCode.Int64:
                     case TypeCode.Byte:
                     case TypeCode.Boolean:
-                        filterValue = filter.Value.ToString().ToLower();
+                        filterValue = filter.Value == null ? "null" : filter.Value.ToString().ToLower();
                         break;
                     case TypeCode.Char:
                     case TypeCode.String:
