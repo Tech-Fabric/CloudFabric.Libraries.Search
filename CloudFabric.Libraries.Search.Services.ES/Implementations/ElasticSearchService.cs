@@ -299,6 +299,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
 
             switch (filter.Operator)
             {
+                case FilterOperator.NotEqual:
                 case FilterOperator.Equal:
                     filterOperator = ":";
                     break;
@@ -314,37 +315,41 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                 case FilterOperator.LowerOrEqual:
                     filterOperator = ":<=";
                     break;
-                case FilterOperator.NotEqual:
-                    filterOperator = "";
-                    break;
-            }
-
-            if (filter.PropertyName.IndexOf(".") != -1)
-            {
-                return $"{filter.PropertyName}{filterOperator}{filter.Value}";
             }
 
             var filterValue = "";
-            switch (SearchableModelAttribute.GetPropertyTypeCode<T>(filter.PropertyName))
+            if (filter.PropertyName.IndexOf(".") != -1)
             {
-                case TypeCode.Decimal:
-                case TypeCode.Double:
-                case TypeCode.Int16:
-                case TypeCode.Int32:
-                case TypeCode.Int64:
-                case TypeCode.Byte:
-                    filterValue += $"{filter.Value}";
-                    break;
-                case TypeCode.Boolean:
-                    filterValue += $"{filter.Value.ToString().ToLower()}";
-                    break;
-                case TypeCode.Char:
-                case TypeCode.String:
-                    filterValue += $"\"{filter.Value}\"";
-                    break;
+                filterValue = (string)filter.Value;
+            }
+            else
+            {
+                switch (SearchableModelAttribute.GetPropertyTypeCode<T>(filter.PropertyName))
+                {
+                    case TypeCode.Decimal:
+                    case TypeCode.Double:
+                    case TypeCode.Int16:
+                    case TypeCode.Int32:
+                    case TypeCode.Int64:
+                    case TypeCode.Byte:
+                        filterValue = (string)filter.Value;
+                        break;
+                    case TypeCode.Boolean:
+                        filterValue = filter.Value.ToString().ToLower();
+                        break;
+                    case TypeCode.Char:
+                    case TypeCode.String:
+                        filterValue = $"\"{filter.Value}\"";
+                        break;
+                }
             }
 
-            return $"{filter.PropertyName}{filterOperator}{filterValue}";
+            var condition = $"{filter.PropertyName}{filterOperator}{filterValue}";
+            if (filter.Operator == FilterOperator.NotEqual)
+            {
+                return $"!({condition})";
+            }
+            return condition;
         }
 
         private string ConstructConditionFilter<T>(Filter filter)
