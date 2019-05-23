@@ -290,13 +290,12 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
 
         private string ConstructOneConditionFilter<T>(Filter filter)
         {
-            var filterOperator = "";
-
             if (string.IsNullOrEmpty(filter.PropertyName))
             {
-                return filterOperator;
+                return "";
             }
 
+            var filterOperator = "";
             switch (filter.Operator)
             {
                 case FilterOperator.NotEqual:
@@ -332,7 +331,28 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                     case TypeCode.Int32:
                     case TypeCode.Int64:
                     case TypeCode.Byte:
-                        filterValue = $"{filter.Value}";
+                    case TypeCode.DateTime:
+                        filterOperator = ":";
+                        var dateFilterValue = ((DateTime)filter.Value).ToString("o");
+                        switch (filter.Operator)
+                        {
+                            case FilterOperator.NotEqual:
+                            case FilterOperator.Equal:
+                                filterValue = $"\"{dateFilterValue}\"";
+                                break;
+                            case FilterOperator.Greater:
+                                filterValue = $"{{{dateFilterValue} TO *}}";
+                                break;
+                            case FilterOperator.GreaterOrEqual:
+                                filterValue = $"[{dateFilterValue} TO *]";
+                                break;
+                            case FilterOperator.Lower:
+                                filterValue = $"{{* TO {dateFilterValue}}}";
+                                break;
+                            case FilterOperator.LowerOrEqual:
+                                filterValue = $"[* TO {dateFilterValue}]";
+                                break;
+                        }
                         break;
                     case TypeCode.Boolean:
                         filterValue = filter.Value.ToString().ToLower();
