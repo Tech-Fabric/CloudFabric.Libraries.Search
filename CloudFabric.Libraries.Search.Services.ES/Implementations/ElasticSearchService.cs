@@ -325,12 +325,6 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             {
                 switch (SearchableModelAttribute.GetPropertyTypeCode<T>(filter.PropertyName))
                 {
-                    case TypeCode.Decimal:
-                    case TypeCode.Double:
-                    case TypeCode.Int16:
-                    case TypeCode.Int32:
-                    case TypeCode.Int64:
-                    case TypeCode.Byte:
                     case TypeCode.DateTime:
                         filterOperator = ":";
                         var dateFilterValue = ((DateTime)filter.Value).ToString("o");
@@ -354,6 +348,12 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                                 break;
                         }
                         break;
+                    case TypeCode.Decimal:
+                    case TypeCode.Double:
+                    case TypeCode.Int16:
+                    case TypeCode.Int32:
+                    case TypeCode.Int64:
+                    case TypeCode.Byte:
                     case TypeCode.Boolean:
                         filterValue = filter.Value.ToString().ToLower();
                         break;
