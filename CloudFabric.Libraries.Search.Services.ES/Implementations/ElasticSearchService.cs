@@ -320,7 +320,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             var filterValue = "";
             if (filter.PropertyName.IndexOf(".") != -1)
             {
-                filterValue = (string)filter.Value;
+                filterValue = $"{filter.Value}";
             }
             else
             {
@@ -332,7 +332,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                     case TypeCode.Int32:
                     case TypeCode.Int64:
                     case TypeCode.Byte:
-                        filterValue = (string)filter.Value;
+                        filterValue = $"{filter.Value}";
                         break;
                     case TypeCode.Boolean:
                         filterValue = filter.Value.ToString().ToLower();
