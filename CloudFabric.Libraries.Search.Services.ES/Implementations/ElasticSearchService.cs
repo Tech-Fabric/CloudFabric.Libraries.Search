@@ -360,7 +360,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             {
                 if (!string.IsNullOrEmpty(q) && f.Logic != null)
                 {
-                    q += $" {f.Logic} ";
+                    q += $" {f.Logic.ToUpper()} ";
                 }
 
                 if (!string.IsNullOrEmpty(q) && f.Logic != null && f.Filter.Filters.Count > 0)
