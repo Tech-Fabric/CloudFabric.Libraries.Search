@@ -371,7 +371,6 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             }
             return condition;
         }
-
         private string ConstructConditionFilter<T>(Filter filter)
         {
             var q = ConstructOneConditionFilter<T>(filter);
@@ -383,14 +382,16 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                     q += $" {f.Logic.ToUpper()} ";
                 }
 
-                if (!string.IsNullOrEmpty(q) && f.Logic != null && f.Filter.Filters.Count > 0)
+                var wrapWithParentheses = f.Logic != null && f.Filter.Filters.Count > 0;
+
+                if (wrapWithParentheses)
                 {
                     q += "(";
                 }
 
-                q += this.ConstructOneConditionFilter<T>(f.Filter);
+                q += ConstructConditionFilter<T>(f.Filter);
 
-                if (!string.IsNullOrEmpty(q) && f.Logic != null && f.Filter.Filters.Count > 0)
+                if (wrapWithParentheses)
                 {
                     q += ")";
                 }
