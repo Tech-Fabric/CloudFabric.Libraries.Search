@@ -22,7 +22,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             var _connectionSettings = new ConnectionSettings(new Uri(uri));
             _connectionSettings.BasicAuthentication(username, password);
             _connectionSettings.DefaultFieldNameInferrer(p => p);
-            //_connectionSettings.EnableDebugMode();
+            _connectionSettings.EnableDebugMode();
 
             _client = new ElasticClient(_connectionSettings);
 
@@ -365,6 +365,10 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             }
 
             var condition = $"{filter.PropertyName}{filterOperator}{filterValue}";
+            if (filter.Value == null)
+            {
+                condition = $"({condition} OR (!(_exists_:{filter.PropertyName})))";
+            }
             if (filter.Operator == FilterOperator.NotEqual)
             {
                 return $"!({condition})";
