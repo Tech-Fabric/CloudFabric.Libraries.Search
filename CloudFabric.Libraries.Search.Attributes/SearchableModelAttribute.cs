@@ -104,18 +104,46 @@ namespace CloudFabric.Libraries.Search.Attributes
             return GetSearchableProperties<T>().Keys.Select(p => p.Name).ToList();
         }
 
-        public static TypeCode GetPropertyTypeCode<T>(string propertyName)
+        public static TypeCode GetPropertyPathTypeCode<T>(string pathName)
+        {
+            return GetPropertyPathTypeCode(pathName, typeof(T));
+        }
+
+        public static TypeCode GetPropertyPathTypeCode(string pathName, Type type)
+        {
+            var pathParts = pathName.Split('.');
+            if (pathParts.Count() <= 1)
+            {
+                return GetPropertyTypeCode(pathName, type);
+            }
+
+            PropertyInfo prop = type.GetProperty(pathParts[0]);
+
+            Type propType;
+            if (prop.PropertyType.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                propType = prop.PropertyType.GetGenericArguments()[0];
+            }
+            else
+            {
+                propType = prop.PropertyType;
+            }
+
+            return GetPropertyPathTypeCode(string.Join(".", pathParts.Skip(1)), propType);
+        }
+
+        public static TypeCode GetPropertyTypeCode(string propertyName, Type type)
         {
             if (string.IsNullOrEmpty(propertyName))
             {
-                throw new Exception($"GetPropertyTypeCode: propertyName can't be empty, type: {typeof(T).FullName}");
+                throw new Exception($"GetPropertyTypeCode: propertyName can't be empty, type: {type.FullName}");
             }
 
-            PropertyInfo prop = typeof(T).GetProperty(propertyName);
+            PropertyInfo prop = type.GetProperty(propertyName);
 
             if (prop == null)
             {
-                throw new Exception($"GetPropertyTypeCode: can't find property {propertyName} on type {typeof(T).FullName}");
+                throw new Exception($"GetPropertyTypeCode: can't find property {propertyName} on type {type.FullName}");
             }
 
             try
@@ -132,8 +160,13 @@ namespace CloudFabric.Libraries.Search.Attributes
             }
             catch (Exception ex)
             {
-                throw new Exception($"Failed to get property type code for property {propertyName} on type {typeof(T).FullName}", ex);
+                throw new Exception($"Failed to get property type code for property {propertyName} on type {type.FullName}", ex);
             }
+        }
+
+        public static TypeCode GetPropertyTypeCode<T>(string propertyName)
+        {
+            return GetPropertyPathTypeCode(propertyName, typeof(T));
         }
     }
 }

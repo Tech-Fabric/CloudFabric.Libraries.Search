@@ -317,51 +317,44 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             }
 
             var filterValue = "";
-            if (filter.PropertyName.IndexOf(".") != -1)
+            switch (SearchableModelAttribute.GetPropertyPathTypeCode<T>(filter.PropertyName))
             {
-                filterValue = $"{filter.Value}";
-            }
-            else
-            {
-                switch (SearchableModelAttribute.GetPropertyTypeCode<T>(filter.PropertyName))
-                {
-                    case TypeCode.DateTime:
-                        filterOperator = ":";
-                        var dateFilterValue = ((DateTime)filter.Value).ToString("o");
-                        switch (filter.Operator)
-                        {
-                            case FilterOperator.NotEqual:
-                            case FilterOperator.Equal:
-                                filterValue = $"\"{dateFilterValue}\"";
-                                break;
-                            case FilterOperator.Greater:
-                                filterValue = $"{{{dateFilterValue} TO *}}";
-                                break;
-                            case FilterOperator.GreaterOrEqual:
-                                filterValue = $"[{dateFilterValue} TO *]";
-                                break;
-                            case FilterOperator.Lower:
-                                filterValue = $"{{* TO {dateFilterValue}}}";
-                                break;
-                            case FilterOperator.LowerOrEqual:
-                                filterValue = $"[* TO {dateFilterValue}]";
-                                break;
-                        }
-                        break;
-                    case TypeCode.Decimal:
-                    case TypeCode.Double:
-                    case TypeCode.Int16:
-                    case TypeCode.Int32:
-                    case TypeCode.Int64:
-                    case TypeCode.Byte:
-                    case TypeCode.Boolean:
-                        filterValue = filter.Value == null ? "null" : filter.Value.ToString().ToLower();
-                        break;
-                    case TypeCode.Char:
-                    case TypeCode.String:
-                        filterValue = $"\"{filter.Value}\"";
-                        break;
-                }
+                case TypeCode.DateTime:
+                    filterOperator = ":";
+                    var dateFilterValue = ((DateTime)filter.Value).ToString("o");
+                    switch (filter.Operator)
+                    {
+                        case FilterOperator.NotEqual:
+                        case FilterOperator.Equal:
+                            filterValue = $"\"{dateFilterValue}\"";
+                            break;
+                        case FilterOperator.Greater:
+                            filterValue = $"{{{dateFilterValue} TO *}}";
+                            break;
+                        case FilterOperator.GreaterOrEqual:
+                            filterValue = $"[{dateFilterValue} TO *]";
+                            break;
+                        case FilterOperator.Lower:
+                            filterValue = $"{{* TO {dateFilterValue}}}";
+                            break;
+                        case FilterOperator.LowerOrEqual:
+                            filterValue = $"[* TO {dateFilterValue}]";
+                            break;
+                    }
+                    break;
+                case TypeCode.Decimal:
+                case TypeCode.Double:
+                case TypeCode.Int16:
+                case TypeCode.Int32:
+                case TypeCode.Int64:
+                case TypeCode.Byte:
+                case TypeCode.Boolean:
+                    filterValue = filter.Value == null ? "null" : filter.Value.ToString().ToLower();
+                    break;
+                case TypeCode.Char:
+                case TypeCode.String:
+                    filterValue = $"\"{filter.Value}\"";
+                    break;
             }
 
             var condition = $"{filter.PropertyName}{filterOperator}{filterValue}";
@@ -375,6 +368,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             }
             return condition;
         }
+
         private string ConstructConditionFilter<T>(Filter filter)
         {
             var q = ConstructOneConditionFilter<T>(filter);
