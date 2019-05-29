@@ -15,6 +15,8 @@ namespace CloudFabric.Libraries.Search.Attributes
         public virtual bool IsSortable { get; set; } = false;
         public virtual bool IsFacetable { get; set; } = false;
 
+        public virtual bool IsNested { get; set; } = false;
+
         public virtual string Analyzer { get; set; }
         public virtual string SearchAnalyzer { get; set; }
         public virtual string IndexAnalyzer { get; set; }

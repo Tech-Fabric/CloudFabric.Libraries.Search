@@ -163,19 +163,55 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
 
             if (searchRequest.Filters != null || searchRequest.Filters.Count > 0)
             {
-                List<string> filterStrings = new List<string>();
+                var filterStrings = new List<string>();
+                var nestedFiltersStrings = new Dictionary<string, List<string>>();
+
                 foreach (var f in searchRequest.Filters)
                 {
-                    filterStrings.Add($"({ConstructConditionFilter<T>(f)})");
+                    var conditionFilter = $"({ConstructConditionFilter<T>(f)})";
+
+                    var pathParts = f.PropertyName.Split('.');
+                    if (pathParts.Count() <= 1)
+                    {
+                        filterStrings.Add(conditionFilter);
+                    }
+                    else
+                    {
+                        var nestedPath = string.Join(".", pathParts.Take(pathParts.Length - 1));
+                        if (nestedFiltersStrings[nestedPath] == null)
+                        {
+                            nestedFiltersStrings[nestedPath] = new List<string>();
+                        }
+                        nestedFiltersStrings[nestedPath].Add(conditionFilter);
+                    }
+                }
+
+                var queryStringQuery = new QueryStringQuery() { Query = string.Join(" AND ", filterStrings) };
+
+                var filter = new List<QueryContainer>() { queryStringQuery };
+
+                foreach (var entry in nestedFiltersStrings)
+                {
+                    var nestedFilter = new NestedQuery()
+                    {
+                        Path = entry.Key,
+                        Query = new BoolQuery()
+                        {
+                            Filter = new List<QueryContainer>()
+                            {
+                                new QueryStringQuery() { Query = string.Join(" AND ", entry.Value) }
+                            }
+                        }
+                    };
+
+                    filter.Add(nestedFilter);
                 }
 
                 result = searchDescriptor.Bool(q =>
                     new BoolQuery()
                     {
                         Must = new List<QueryContainer>() { textQuery },
-                        Filter = new List<QueryContainer>() {
-                            new QueryStringQuery() { Query = string.Join(" AND ", filterStrings) }
-                        }
+                        Filter = filter
                     }
                 );
             }

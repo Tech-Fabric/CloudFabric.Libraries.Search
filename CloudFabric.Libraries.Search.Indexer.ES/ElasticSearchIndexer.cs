@@ -160,7 +160,7 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                                 });
                                 break;
                             case TypeCode.Object:
-                                properties = properties.Object<Object>(p => p.Name(prop.Name));
+                                properties = properties.Nested<object>(p => p.Name(prop.Name));
                                 break;
                             default:
                                 throw new Exception(
