@@ -110,6 +110,27 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                         }
                     }
                 }
+                else if (agg.Value is SingleBucketAggregate)
+                {
+                    foreach (var item in ((agg.Value as Nest.SingleBucketAggregate).FirstOrDefault().Value as Nest.BucketAggregate).Items)
+                    {
+                        var data = ((item as Nest.KeyedBucket<object>).Values.FirstOrDefault() as Nest.SingleBucketAggregate).Values.FirstOrDefault();
+                        var facetStats = new FacetStats()
+                        {
+                            Value = (item as KeyedBucket<object>).Key,
+                            Count = (data as SingleBucketAggregate).DocCount
+                        };
+
+                        string sumByField = (data as Nest.SingleBucketAggregate).Keys?.FirstOrDefault();
+                        if (sumByField != null && sumByField != "")
+                        {
+                            facetStats.SumByField = sumByField;
+                            var valueAgg = (ValueAggregate)((data as SingleBucketAggregate).Values.FirstOrDefault());
+                            facetStats.SumByValue = valueAgg.Value;
+                        }
+                        facetValues.Add(facetStats);
+                    }
+                }
 
                 results.FacetsStats.Add(agg.Key, facetValues);
             }
@@ -164,25 +185,15 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             if (searchRequest.Filters != null || searchRequest.Filters.Count > 0)
             {
                 var filterStrings = new List<string>();
-                var nestedFiltersStrings = new Dictionary<string, List<string>>();
 
                 foreach (var f in searchRequest.Filters)
                 {
                     var conditionFilter = $"({ConstructConditionFilter<T>(f)})";
+                    var propName = f.PropertyName == null ? f.Filters[0].Filter.PropertyName : f.PropertyName;
 
-                    var pathParts = f.PropertyName.Split('.');
-                    if (pathParts.Count() <= 1)
+                    if (propName.IndexOf(".") == -1)
                     {
                         filterStrings.Add(conditionFilter);
-                    }
-                    else
-                    {
-                        var nestedPath = string.Join(".", pathParts.Take(pathParts.Length - 1));
-                        if (nestedFiltersStrings[nestedPath] == null)
-                        {
-                            nestedFiltersStrings[nestedPath] = new List<string>();
-                        }
-                        nestedFiltersStrings[nestedPath].Add(conditionFilter);
                     }
                 }
 
@@ -190,7 +201,9 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
 
                 var filter = new List<QueryContainer>() { queryStringQuery };
 
-                foreach (var entry in nestedFiltersStrings)
+                var nestedQueryStrings = ConstructNestedQueryStrings<T>(searchRequest.Filters);
+
+                foreach (var entry in nestedQueryStrings)
                 {
                     var nestedFilter = new NestedQuery()
                     {
@@ -199,7 +212,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                         {
                             Filter = new List<QueryContainer>()
                             {
-                                new QueryStringQuery() { Query = string.Join(" AND ", entry.Value) }
+                                new QueryStringQuery() { Query = entry.Value }
                             }
                         }
                     };
@@ -218,6 +231,44 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             else
             {
                 result = textQuery;
+            }
+
+            return result;
+        }
+
+        private Dictionary<string, string> ConstructNestedQueryStrings<T>(List<Filter> filters)
+        {
+            var result = new Dictionary<string, string>();
+
+            if (filters == null || filters.Count == 0)
+            {
+                return result;
+            }
+
+            var nestedFiltersStrings = new Dictionary<string, List<string>>();
+
+            foreach (var f in filters)
+            {
+                var propName = f.PropertyName == null ? f.Filters[0].Filter.PropertyName : f.PropertyName;
+                var pathParts = propName.Split('.');
+
+                if (pathParts.Count() <= 1)
+                {
+                    continue;
+                }
+
+                var conditionFilter = $"({ConstructConditionFilter<T>(f)})";
+                var nestedPath = string.Join(".", pathParts.Take(pathParts.Length - 1));
+                if (!nestedFiltersStrings.ContainsKey(nestedPath))
+                {
+                    nestedFiltersStrings[nestedPath] = new List<string>();
+                }
+                nestedFiltersStrings[nestedPath].Add(conditionFilter);
+            }
+
+            foreach (var entry in nestedFiltersStrings)
+            {
+                result[entry.Key] = string.Join(" AND ", entry.Value);
             }
 
             return result;
@@ -267,6 +318,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                     }
                     else
                     {
+                        var pathParts = facetInfo.FacetName.Split('.');
                         var termsAgg = new TermsAggregation(facetInfo.FacetName)
                         {
                             Field = facetInfo.FacetName,
@@ -276,15 +328,48 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                             //new TermsOrder() { Key = "_term", Order = Nest.SortOrder.Descending }
                             }
                         };
-
-                        if (facetInfo.SumByField != null && facetInfo.SumByField != "")
+                        AggregationContainer agg;
+                        if (pathParts.Count() <= 1)
                         {
-                            termsAgg.Aggregations = new SumAggregation(facetInfo.SumByField, facetInfo.SumByField);
+                            agg = termsAgg;
+                            if (facetInfo.SumByField != null && facetInfo.SumByField != "")
+                            {
+                                termsAgg.Aggregations = new SumAggregation(facetInfo.SumByField, facetInfo.SumByField);
+                            }
+                        }
+                        else
+                        {
+                            var nestedPath = string.Join(".", pathParts.Take(pathParts.Length - 1));
+
+                            var reverseNestedAgg = new ReverseNestedAggregation(facetInfo.FacetName);
+
+                            if (facetInfo.SumByField != null && facetInfo.SumByField != "")
+                            {
+                                reverseNestedAgg.Aggregations = new SumAggregation(facetInfo.SumByField, facetInfo.SumByField);
+                            }
+
+                            var nestedQueryStrings = ConstructNestedQueryStrings<T>(searchRequest.Filters);
+                            var query = nestedQueryStrings.ContainsKey(nestedPath) ? nestedQueryStrings[nestedPath] : "*";
+
+                            termsAgg.Aggregations = new FilterAggregation(facetInfo.FacetName)
+                            {
+                                Filter = new QueryStringQuery()
+                                {
+                                    Query = query
+                                },
+                                Aggregations = reverseNestedAgg
+                            };
+
+                            agg = new NestedAggregation(facetInfo.FacetName)
+                            {
+                                Path = nestedPath,
+                                Aggregations = termsAgg
+                            };
                         }
 
                         aggs.Add(
                             facetInfo.FacetName,
-                            termsAgg
+                            agg
                         );
                     }
                 }
