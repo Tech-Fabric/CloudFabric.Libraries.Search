@@ -331,11 +331,11 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                         AggregationContainer agg;
                         if (pathParts.Count() <= 1)
                         {
-                            agg = termsAgg;
                             if (facetInfo.SumByField != null && facetInfo.SumByField != "")
                             {
                                 termsAgg.Aggregations = new SumAggregation(facetInfo.SumByField, facetInfo.SumByField);
                             }
+                            agg = termsAgg;
                         }
                         else
                         {
