@@ -46,6 +46,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             var searchResponse = await _client.SearchAsync<ResultT>(s =>
             {
                 s = s.Index(indexName);
+                s = s.TrackTotalHits();
                 s = s.Query(q => ConstructSearchQuery(q, searchRequest));
                 s = s.Sort(d => ConstructSort(d, searchRequest));
                 s = s.Aggregations(a => ConstructAggregations(a, searchRequest, facetProperties));
