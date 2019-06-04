@@ -10,7 +10,7 @@ namespace CloudFabric.Libraries.Search.Attributes
         public virtual bool IsKey { get; set; } = false;
         public virtual bool IsSearchable { get; set; } = false;
         public virtual string[] SynonymMaps { get; set; } = new string[] { };
-        public virtual double SearchableBoost { get; set; } = 0;
+        public virtual double SearchableBoost { get; set; } = 1;
         public virtual bool IsFilterable { get; set; } = false;
         public virtual bool IsSortable { get; set; } = false;
         public virtual bool IsFacetable { get; set; } = false;

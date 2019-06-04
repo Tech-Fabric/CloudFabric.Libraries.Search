@@ -165,22 +165,23 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
 
             if (searchRequest.SearchText != "*")
             {
-                textQuery = new MultiMatchQuery()
-                {
-                    //Fields = properties.Select(p => "folding-" + p).ToArray(),
-                    Fields = properties.ToArray(),
-                    Query = searchRequest.SearchText,
-                    Analyzer = "folding-analyzer",
-                    Boost = 1.0,
-                    CutoffFrequency = 0.001,
-                    Fuzziness = Fuzziness.Auto,
-                    Lenient = true,
-                    MaxExpansions = 2,
-                    MinimumShouldMatch = 2,
-                    PrefixLength = 2,
-                    Operator = Operator.Or,
-                    Name = "query"
-                };
+                //textQuery = new MultiMatchQuery()
+                //{
+                //    //Fields = properties.Select(p => "folding-" + p).ToArray(),
+                //    Fields = properties.ToArray(),
+                //    Query = searchRequest.SearchText,
+                //    Analyzer = "folding-analyzer",
+                //    Boost = 1.0,
+                //    CutoffFrequency = 0.001,
+                //    Fuzziness = Fuzziness.Auto,
+                //    Lenient = true,
+                //    MaxExpansions = 2,
+                //    MinimumShouldMatch = 2,
+                //    PrefixLength = 2,
+                //    Operator = Operator.Or,
+                //    Name = "query"
+                //};
+                textQuery = new QueryStringQuery() { Query = searchRequest.SearchText };
             }
 
             if (searchRequest.Filters != null || searchRequest.Filters.Count > 0)
