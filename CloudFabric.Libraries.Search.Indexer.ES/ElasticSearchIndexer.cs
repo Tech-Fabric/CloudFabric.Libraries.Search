@@ -61,13 +61,15 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                     var descriptor = new CreateIndexDescriptor(newIndexName)
                         .Settings(s => s
                             .Analysis(analysis => analysis
-                            .Analyzers(analyzers => analyzers
-                                .Custom("folding-analyzer", c => c
-                                    .Tokenizer("standard")
-                                    .Filters("lowercase", "asciifolding")
+                                .Analyzers(analyzers => analyzers
+                                    .Custom("folding-analyzer", c => c
+                                        .Tokenizer("standard")
+                                        .Filters("lowercase", "asciifolding")
+                                    )
                                 )
                             )
-                        ));
+                            .Setting("max_result_window", 1000000)
+                        );
 
                     await _client.CreateIndexAsync(descriptor);
                     Console.WriteLine($"Created index " + newIndexName);
