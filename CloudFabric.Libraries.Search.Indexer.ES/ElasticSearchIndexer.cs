@@ -2,6 +2,7 @@
 using CloudFabric.Libraries.Search.Attributes;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -11,11 +12,15 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
     {
         private ElasticClient _client = null;
 
-        public ElasticSearchIndexer(string uri, string username, string password)
+        public ElasticSearchIndexer(string uri, string username, string password, bool debug = false)
         {
             var _connectionSettings = new ConnectionSettings(new Uri(uri));
             _connectionSettings.BasicAuthentication(username, password);
             _connectionSettings.DefaultFieldNameInferrer(p => p);
+            if (debug)
+            {
+                _connectionSettings.EnableDebugMode();
+            }
 
             _client = new ElasticClient(_connectionSettings);
         }
@@ -66,13 +71,40 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                                         .Tokenizer("standard")
                                         .Filters("lowercase", "asciifolding")
                                     )
+                                    .Custom("phone-number", c => c
+                                        .Tokenizer("keyword")
+                                        .Filters("us-phone-number", "ten-digits-min")
+                                        .CharFilters("digits-only")
+                                    )
+                                    .Custom("phone-number-search", c => c
+                                        .Tokenizer("keyword")
+                                        .Filters("not-empty")
+                                        .CharFilters("digits-only")
+                                    )
+                                )
+                                .CharFilters(charFilters => charFilters
+                                    .PatternReplace("digits-only", p => p.Pattern("[^\\d]").Replacement(""))
+                                )
+                                .TokenFilters(filters => filters
+                                    .PatternCapture("us-phone-number", f => f.Patterns("1?(1)(\\d*)").PreserveOriginal())
+                                    .Length("ten-digits-min", f => f.Min(10))
+                                    .Length("not-empty", f => f.Min(1))
                                 )
                             )
                             .Setting("max_result_window", 1000000)
                         );
 
-                    await _client.CreateIndexAsync(descriptor);
-                    Console.WriteLine($"Created index " + newIndexName);
+                    var createIndexResponse = await _client.CreateIndexAsync(descriptor);
+                    if (createIndexResponse.Acknowledged)
+                    {
+                        Console.WriteLine($"Created index " + newIndexName);
+                    }
+                    else
+                    {
+                        var message = $"Index creation failed for index {newIndexName}!";
+                        Console.WriteLine(message);
+                        throw new Exception(message);
+                    }
                 }
 
                 var properties = GetPropertiesDescriptors<T>();
@@ -103,72 +135,78 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                 foreach (object attr in attrs)
                 {
                     SearchablePropertyAttribute propertyAttribute = attr as SearchablePropertyAttribute;
-                    if (propertyAttribute != null)
+                    if (propertyAttribute == null)
                     {
-                        Type propertyType = prop.PropertyType;
+                        continue;
+                    }
 
-                        if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
-                        {
-                            propertyType = Nullable.GetUnderlyingType(propertyType);
-                        }
+                    Type propertyType = prop.PropertyType;
 
-                        switch (Type.GetTypeCode(propertyType))
-                        {
-                            case TypeCode.Int32:
-                            case TypeCode.Int64:
-                            case TypeCode.Double:
-                                properties = properties.Number(p =>
+                    if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                    {
+                        propertyType = Nullable.GetUnderlyingType(propertyType);
+                    }
+
+                    switch (Type.GetTypeCode(propertyType))
+                    {
+                        case TypeCode.Int32:
+                        case TypeCode.Int64:
+                        case TypeCode.Double:
+                            properties = properties.Number(p =>
+                            {
+                                return p.Name(prop.Name);
+                            });
+                            break;
+                        case TypeCode.Boolean:
+                            properties = properties.Boolean(p =>
+                            {
+                                return p.Name(prop.Name);
+                            });
+                            break;
+                        case TypeCode.String:
+                            if (propertyAttribute.IsSearchable)
+                            {
+                                var analyzer = string.IsNullOrEmpty(propertyAttribute.Analyzer) ? "standard" : propertyAttribute.Analyzer;
+                                var searchAnalyzer = string.IsNullOrEmpty(propertyAttribute.Analyzer) ? "standard" : propertyAttribute.SearchAnalyzer;
+
+                                properties = properties.Keyword(p =>
                                 {
-                                    return p.Name(prop.Name);
-                                });
-                                break;
-                            case TypeCode.Boolean:
-                                properties = properties.Boolean(p =>
-                                {
-                                    return p.Name(prop.Name);
-                                });
-                                break;
-                            case TypeCode.String:
-                                if (propertyAttribute.IsSearchable)
-                                {
-                                    properties = properties.Keyword(p =>
-                                    {
-                                        return p
-                                            .Name(prop.Name)
-                                            .Fields(f => f
-                                                .Text(ss => ss
-                                                    .Name("folded")
-                                                    .Analyzer("folding-analyzer")
-                                                    .Boost(propertyAttribute.SearchableBoost)
-                                                )
-                                                .Text(ss => ss
-                                                    .Name("text")
-                                                    .Analyzer("standard")
-                                                    .Boost(propertyAttribute.SearchableBoost)
-                                                )
+                                    return p
+                                        .Name(prop.Name)
+                                        .Fields(f => f
+                                            .Text(ss => ss
+                                                .Name("folded")
+                                                .Analyzer("folding-analyzer")
+                                                .Boost(propertyAttribute.SearchableBoost)
                                             )
-                                            .Boost(propertyAttribute.SearchableBoost);
-                                    });
-                                }
-                                else
-                                {
-                                    properties = properties.Keyword(p => p.Name(prop.Name));
-                                }
-                                break;
-                            case TypeCode.DateTime:
-                                properties = properties.Date(p =>
-                                {
-                                    return p.Name(prop.Name);
+                                            .Text(ss => ss
+                                                .Name("text")
+                                                .Analyzer(analyzer)
+                                                .SearchAnalyzer(searchAnalyzer)
+                                                .Boost(propertyAttribute.SearchableBoost)
+                                            )
+                                        )
+                                        .Boost(propertyAttribute.SearchableBoost);
                                 });
-                                break;
-                            case TypeCode.Object:
-                                properties = properties.Nested<object>(p => p.Name(prop.Name));
-                                break;
-                            default:
-                                throw new Exception(
-                                    $"Elastic Search doesn't support {prop.PropertyType.Name} type. TypeCode: {Type.GetTypeCode(prop.PropertyType)}"
-                                );
-                        }
+                            }
+                            else
+                            {
+                                properties = properties.Keyword(p => p.Name(prop.Name));
+                            }
+                            break;
+                        case TypeCode.DateTime:
+                            properties = properties.Date(p =>
+                            {
+                                return p.Name(prop.Name);
+                            });
+                            break;
+                        case TypeCode.Object:
+                            properties = properties.Nested<object>(p => p.Name(prop.Name));
+                            break;
+                        default:
+                            throw new Exception(
+                                $"Elastic Search doesn't support {prop.PropertyType.Name} type. TypeCode: {Type.GetTypeCode(prop.PropertyType)}"
+                            );
                     }
                 }
             }
