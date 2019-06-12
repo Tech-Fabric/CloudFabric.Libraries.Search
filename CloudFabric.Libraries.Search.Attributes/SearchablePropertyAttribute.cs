@@ -9,6 +9,7 @@ namespace CloudFabric.Libraries.Search.Attributes
     {
         public virtual bool IsKey { get; set; } = false;
         public virtual bool IsSearchable { get; set; } = false;
+        public virtual bool IsRetrievable { get; set; } = true;
         public virtual string[] SynonymMaps { get; set; } = new string[] { };
         public virtual double SearchableBoost { get; set; } = 1;
         public virtual bool IsFilterable { get; set; } = false;

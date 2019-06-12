@@ -25,7 +25,7 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
         {
             foreach (var mapName in synonymMaps.Keys)
             {
-                await _serviceClient.SynonymMaps.CreateOrUpdateAsync(new SynonymMap(mapName, SynonymMapFormat.Solr, string.Join("\n", synonymMaps[mapName])));
+                await _serviceClient.SynonymMaps.CreateOrUpdateAsync(new SynonymMap(mapName, string.Join("\n", synonymMaps[mapName])));
             }
         }
 
@@ -116,88 +116,8 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
 
                         if (propertyAttribute != null)
                         {
-                            Type propertyType = prop.PropertyType;
-
-                            if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
-                            {
-                                propertyType = Nullable.GetUnderlyingType(propertyType);
-                            }
-
-                            var field = new Field();
-
-                            field.Name = prop.Name;
-
-                            switch (Type.GetTypeCode(propertyType))
-                            {
-                                case TypeCode.Int32:
-                                    field.Type = DataType.Int32;
-                                    break;
-                                case TypeCode.Int64:
-                                    field.Type = DataType.Int64;
-                                    break;
-                                case TypeCode.Double:
-                                    field.Type = DataType.Double;
-                                    break;
-                                case TypeCode.Boolean:
-                                    field.Type = DataType.Boolean;
-                                    break;
-                                case TypeCode.String:
-                                    field.Type = DataType.String;
-                                    if (propertyAttribute.IsSearchable && !propertyAttribute.UseForSuggestions
-                                        && string.IsNullOrWhiteSpace(propertyAttribute.SearchAnalyzer) && string.IsNullOrWhiteSpace(propertyAttribute.IndexAnalyzer)) 
-                                        // Azure search doesn't support custom analyzer on fields enabled for suggestions
-                                        // If Search & IndexAnalyzers are specified, we cannot set Analyzer
-                                    {
-                                        field.Analyzer = "standardasciifolding.lucene";
-                                    }
-                                    break;
-                                case TypeCode.Object:
-                                    var elementType = propertyType.GetElementType();
-                                    if (Type.GetTypeCode(elementType) != TypeCode.String)
-                                    {
-                                        throw new Exception("Unsupported array element type!");
-                                    }
-                                    field.Type = DataType.Collection(DataType.String);
-                                    if (propertyAttribute.IsSearchable && !propertyAttribute.UseForSuggestions) // Azure search doesn't support custom analyzer on fields enabled for suggestions
-                                    {
-                                        field.Analyzer = "standardasciifolding.lucene";
-                                    }
-                                    break;
-                                case TypeCode.DateTime:
-                                    field.Type = DataType.DateTimeOffset;
-                                    break;
-                                default:
-                                    throw new Exception($"Azure Search doesn't support {propertyType.Name} type.");
-                            }
-
-                            if (propertyAttribute.Analyzer != null && propertyAttribute.Analyzer != "")
-                            {
-                                field.Analyzer = propertyAttribute.Analyzer;
-                            }
-                            //SearchAnalyzer & IndexAnalyzer should be specified together
-                            if (!string.IsNullOrWhiteSpace(propertyAttribute.SearchAnalyzer) && !string.IsNullOrWhiteSpace(propertyAttribute.IndexAnalyzer))
-                            {
-                                field.SearchAnalyzer = propertyAttribute.SearchAnalyzer;
-                                field.IndexAnalyzer = propertyAttribute.IndexAnalyzer;
-                            }
-                            else if ((string.IsNullOrWhiteSpace(propertyAttribute.SearchAnalyzer) && !string.IsNullOrWhiteSpace(propertyAttribute.IndexAnalyzer))
-                                    || (!string.IsNullOrWhiteSpace(propertyAttribute.SearchAnalyzer) && string.IsNullOrWhiteSpace(propertyAttribute.IndexAnalyzer))
-                                    )
-                            {
-                                throw new Exception($"Both SearchAnalyzer & IndexAnalyzer are should be specified together.");
-                            }
-
-                            field.IsKey = propertyAttribute.IsKey;
-                            field.IsFilterable = propertyAttribute.IsFilterable;
-                            field.IsSortable = propertyAttribute.IsSortable;
-                            field.IsSearchable = propertyAttribute.IsSearchable;
-                            field.IsFacetable = propertyAttribute.IsFacetable;
-
-                            if (propertyAttribute.SynonymMaps.Length > 0)
-                            {
-                                field.SynonymMaps = propertyAttribute.SynonymMaps;
-                            }
-
+                            var field = ConstructFieldForProperty(prop, propertyAttribute);
+                            
                             fields.Add(field);
 
                             if (propertyAttribute.UseForSuggestions)
@@ -234,6 +154,133 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
             }
 
             return true;
+        }
+
+        public Field ConstructFieldForProperty(PropertyInfo prop, SearchablePropertyAttribute propertyAttribute)
+        {
+            Type propertyType = prop.PropertyType;
+
+            if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                propertyType = Nullable.GetUnderlyingType(propertyType);
+            }
+
+            Field field = null;
+            var fieldName = prop.Name;
+            
+
+            if (propertyAttribute.IsNested)
+            {
+                var nestedFields = new List<Field>();
+
+                var isList = propertyType.GetTypeInfo().IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>);
+
+                if (isList)
+                {
+                    propertyType = propertyType.GetGenericArguments()[0];
+                }
+
+                PropertyInfo[] nestedProps = propertyType.GetProperties();
+                foreach (PropertyInfo nestedProp in nestedProps)
+                {
+                    object[] attrs = nestedProp.GetCustomAttributes(true);
+                    foreach (object attr in attrs)
+                    {
+                        SearchablePropertyAttribute nestedPropertyAttribute = attr as SearchablePropertyAttribute;
+
+                        if (propertyAttribute != null)
+                        {
+                            var nestedField = ConstructFieldForProperty(nestedProp, nestedPropertyAttribute);
+
+                            nestedFields.Add(nestedField);
+                        }
+                    }
+                }
+
+                if (isList)
+                {
+                    field = new Field(fieldName, DataType.Collection(DataType.Complex), nestedFields);
+                }
+                else
+                {
+                    field = new Field(fieldName, DataType.Complex, nestedFields);
+                }
+            }
+            else
+            {
+                DataType? fieldType = null;
+
+                switch (Type.GetTypeCode(propertyType))
+                {
+                    case TypeCode.Int32:
+                        fieldType = DataType.Int32;
+                        break;
+                    case TypeCode.Int64:
+                        fieldType = DataType.Int64;
+                        break;
+                    case TypeCode.Single:
+                    case TypeCode.Decimal:
+                    case TypeCode.Double:
+                        fieldType = DataType.Double;
+                        break;
+                    case TypeCode.Boolean:
+                        fieldType = DataType.Boolean;
+                        break;
+                    case TypeCode.String:
+                        fieldType = DataType.String;
+                        break;
+                    case TypeCode.Object:
+                        var elementType = propertyType.GetElementType();
+                        if (Type.GetTypeCode(elementType) != TypeCode.String)
+                        {
+                            throw new Exception("Unsupported array element type!");
+                        }
+                        fieldType = DataType.Collection(DataType.String);
+
+                        break;
+                    case TypeCode.DateTime:
+                        fieldType = DataType.DateTimeOffset;
+                        break;
+                    default:
+                        throw new Exception($"Azure Search doesn't support {propertyType.Name} type.");
+                }
+
+                field = new Field(fieldName, fieldType.GetValueOrDefault());
+            }
+
+            if (propertyAttribute.Analyzer != null && propertyAttribute.Analyzer != "")
+            {
+                field.Analyzer = propertyAttribute.Analyzer;
+            }
+            //SearchAnalyzer & IndexAnalyzer should be specified together
+            if (!string.IsNullOrWhiteSpace(propertyAttribute.SearchAnalyzer) && !string.IsNullOrWhiteSpace(propertyAttribute.IndexAnalyzer))
+            {
+                field.SearchAnalyzer = propertyAttribute.SearchAnalyzer;
+                field.IndexAnalyzer = propertyAttribute.IndexAnalyzer;
+            }
+            else if ((string.IsNullOrWhiteSpace(propertyAttribute.SearchAnalyzer) && !string.IsNullOrWhiteSpace(propertyAttribute.IndexAnalyzer))
+                    || (!string.IsNullOrWhiteSpace(propertyAttribute.SearchAnalyzer) && string.IsNullOrWhiteSpace(propertyAttribute.IndexAnalyzer))
+                    )
+            {
+                throw new Exception($"Both SearchAnalyzer & IndexAnalyzer are should be specified together.");
+            }
+
+            if(propertyAttribute.IsNested == false)
+            {
+                field.IsKey = propertyAttribute.IsKey;
+                field.IsRetrievable = propertyAttribute.IsRetrievable;
+                field.IsFilterable = propertyAttribute.IsFilterable;
+                field.IsSortable = propertyAttribute.IsSortable;
+                field.IsSearchable = propertyAttribute.IsSearchable;
+                field.IsFacetable = propertyAttribute.IsFacetable;
+            }
+
+            if (propertyAttribute.SynonymMaps.Length > 0)
+            {
+                field.SynonymMaps = propertyAttribute.SynonymMaps;
+            }
+
+            return field;
         }
     }
 }

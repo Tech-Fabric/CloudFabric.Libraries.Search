@@ -43,6 +43,11 @@ namespace CloudFabric.Libraries.Search.Harvester.Azure
             {
                 var indexName = SearchableModelAttribute.GetIndexName(typeof(T));
 
+                if(indexName == null)
+                {
+                    throw new Exception($"Type {typeof(T).Name} does not have SearchableModelAttribute");
+                }
+
                 if (_indexMapping.ContainsKey(indexName))
                 {
                     indexName = _indexMapping[indexName];
@@ -76,14 +81,15 @@ namespace CloudFabric.Libraries.Search.Harvester.Azure
 
                     var recordsToUpload = records.Skip(uploadedRecords).Take(recordsInOneStep);
 
-                    var actions = new List<IndexAction<Dictionary<string, object>>>();
+                    var actions = new List<IndexAction<T>>();
 
                     foreach (var r in recordsToUpload)
                     {
-                        Dictionary<string, object> recordSerialized = r.GetType().GetProperties()
+                        Dictionary<string, object> recordSerialized = r.GetType()
+                            .GetProperties()
                             .ToDictionary(x => x.Name, x => x.GetValue(r));
 
-                        var indexAction = IndexAction.MergeOrUpload(recordSerialized);
+                        var indexAction = IndexAction.MergeOrUpload(r);
 
                         actions.Add(indexAction);
                     }
@@ -115,7 +121,6 @@ namespace CloudFabric.Libraries.Search.Harvester.Azure
 
                 return true;
             }
-
         }
 
         public bool Delete<T>(IEnumerable<string> idList) where T : class
