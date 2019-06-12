@@ -79,11 +79,12 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                                     .Custom("phone-number-search", c => c
                                         .Tokenizer("keyword")
                                         .Filters("not-empty")
-                                        .CharFilters("digits-only")
+                                        .CharFilters("alphanum-only")
                                     )
                                 )
                                 .CharFilters(charFilters => charFilters
                                     .PatternReplace("digits-only", p => p.Pattern("[^\\d]").Replacement(""))
+                                    .PatternReplace("alphanum-only", p => p.Pattern("[^a-zA-Z\\d]").Replacement(""))
                                 )
                                 .TokenFilters(filters => filters
                                     .PatternCapture("us-phone-number", f => f.Patterns("1?(1)(\\d*)").PreserveOriginal())
@@ -167,7 +168,7 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                             if (propertyAttribute.IsSearchable)
                             {
                                 var analyzer = string.IsNullOrEmpty(propertyAttribute.Analyzer) ? "standard" : propertyAttribute.Analyzer;
-                                var searchAnalyzer = string.IsNullOrEmpty(propertyAttribute.Analyzer) ? "standard" : propertyAttribute.SearchAnalyzer;
+                                var searchAnalyzer = string.IsNullOrEmpty(propertyAttribute.SearchAnalyzer) ? analyzer : propertyAttribute.SearchAnalyzer;
 
                                 properties = properties.Keyword(p =>
                                 {
