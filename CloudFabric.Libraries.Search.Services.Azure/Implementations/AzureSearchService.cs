@@ -5,6 +5,7 @@ using Microsoft.Azure.Search;
 using Microsoft.Azure.Search.Models;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -23,37 +24,23 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
         /// <summary>
         /// Allows remapping indexes stored on SearchAttributes to new names.
         /// </summary>
-        private Dictionary<string, string> _indexMapping;
+        private ConcurrentDictionary<string, string> _indexMapping;
 
         private Dictionary<string, string> _propertyShortCutMapping = new Dictionary<string, string>();
 
-        public AzureSearchService(string searchServiceName, string apiKey, Dictionary<string, string> indexMapping = null, TelemetryClient telemetryClient = null)
+        public AzureSearchService(string searchServiceName, string apiKey, ConcurrentDictionary<string, string> indexMapping = null, TelemetryClient telemetryClient = null)
         {
             _telemetryClient = telemetryClient;
             _searchClient = new SearchServiceClient(searchServiceName, new SearchCredentials(apiKey));
 
             if (indexMapping == null)
             {
-                _indexMapping = new Dictionary<string, string>();
+                _indexMapping = new ConcurrentDictionary<string, string>();
             }
             else
             {
                 _indexMapping = indexMapping;
             }
-
-            //var filterPropertiesShortcuts = typeof(Search.FilterProperties).GetFields();
-            //foreach (var f in filterPropertiesShortcuts)
-            //{
-            //    var shortcut = (string)f.GetValue(f);
-            //    if (_propertyShortCutMapping.ContainsKey(shortcut))
-            //    {
-            //        Console.Error.WriteLine("FilterProperties object contains duplicate property value.");
-            //    }
-            //    else
-            //    {
-            //        _propertyShortCutMapping.Add(shortcut, f.Name);
-            //    }
-            //}
         }
 
         private string GetPropertyName(string propertyShortcut)
