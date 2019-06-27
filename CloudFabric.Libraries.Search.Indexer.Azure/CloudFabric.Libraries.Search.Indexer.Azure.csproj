@@ -9,9 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CloudFabric.Libraries.Search.Attributes\CloudFabric.Libraries.Search.Attributes.csproj" />
     <ProjectReference Include="..\CloudFabric.Libraries.Search.Indexer\CloudFabric.Libraries.Search.Indexer.csproj" />
-    <ProjectReference Include="..\CloudFabric.Libraries.Search\CloudFabric.Libraries.Search.csproj" />
   </ItemGroup>
 
 </Project>

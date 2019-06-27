@@ -140,14 +140,7 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
             }
 
             Type resultType = typeof(ResultT);
-            MemberInfo[] props = resultType.GetMembers();
-            List<string> propertiesToSelect = props
-                .Where(p => 
-                    (p.MemberType == MemberTypes.Field || p.MemberType == MemberTypes.Property) && 
-                    p.GetCustomAttributes(typeof(IgnorePropertyAttribute), true).Length == 0
-                )
-                .Select(p => p.Name)
-                .ToList();
+            List<string> propertiesToSelect = GetPropertiesToSelect(resultType);
 
             SearchParameters sp = new SearchParameters()
             {
@@ -228,26 +221,29 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
 
             if (azureSearchResults.Body.Facets != null)
             {
-                foreach (var facetProp in facetProperties)
+                //foreach (var facetProp in facetProperties)
+                //{
+                //if (azureSearchResults.Body.Facets.ContainsKey(facetProp.Key.Name))
+                //{
+                foreach (var kv in azureSearchResults.Body.Facets)
                 {
-                    if (azureSearchResults.Body.Facets.ContainsKey(facetProp.Key.Name))
+                    var facetValues = new List<FacetStats>();
+
+                    foreach (var facetValue in kv.Value)
                     {
-                        var facetValues = new List<FacetStats>();
-
-                        foreach (var facetStat in azureSearchResults.Body.Facets[facetProp.Key.Name])
+                        facetValues.Add(new FacetStats()
                         {
-                            facetValues.Add(new FacetStats()
-                            {
-                                Value = facetStat.Value,
-                                Count = facetStat.Count,
-                                From = (double?)facetStat.From,
-                                To = (double?)facetStat.To
-                            });
-                        }
-
-                        results.FacetsStats.Add(facetProp.Key.Name, facetValues);
+                            Value = facetValue.Value,
+                            Count = facetValue.Count,
+                            From = (double?)facetValue.From,
+                            To = (double?)facetValue.To
+                        });
                     }
+
+                    results.FacetsStats.Add(kv.Key.Replace("/", "."), facetValues);
                 }
+                //  }
+                //}
             }
 
             foreach (var record in azureSearchResults.Body.Results)
@@ -310,6 +306,67 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
             }
 
             return indexClient;
+        }
+
+        /// <summary>
+        /// Returns list of properties to select from search service by reading model's members
+        /// </summary>
+        /// <param name="t"></param>
+        /// <returns></returns>
+        private List<string> GetPropertiesToSelect(Type t)
+        {
+            MemberInfo[] props = t.GetMembers();
+            List<string> propertiesToSelect = new List<string>();
+
+            foreach (var p in props)
+            {
+                if (p.GetCustomAttributes(typeof(IgnorePropertyAttribute), true).Length > 0)
+                {
+                    continue;
+                }
+
+                if (p.MemberType == MemberTypes.Method ||
+                    p.MemberType == MemberTypes.Constructor ||
+                    p.MemberType == MemberTypes.Event)
+                {
+                    continue;
+                }
+
+                Type propertyType = null;
+
+                if (p.MemberType == MemberTypes.Property)
+                {
+                    propertyType = (p as PropertyInfo).PropertyType;
+                }
+                else if (p.MemberType == MemberTypes.Field)
+                {
+                    propertyType = (p as FieldInfo).FieldType;
+                }
+
+                var isList = propertyType.GetTypeInfo().IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>);
+
+                if (propertyType.GetType().IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+                {
+                    propertyType = Nullable.GetUnderlyingType(propertyType);
+                }
+
+                if (isList)
+                {
+                    propertyType = propertyType.GetGenericArguments()[0];
+                }
+
+                if (propertyType.Namespace == "System")
+                {
+                    propertiesToSelect.Add(p.Name);
+                }
+                else
+                {
+                    var childProperties = GetPropertiesToSelect(propertyType);
+                    propertiesToSelect.AddRange(childProperties.Select(cp => p.Name + "/" + cp));
+                }
+            }
+
+            return propertiesToSelect;
         }
 
         private string ConstructOneConditionFilter<T>(Filter filter)
@@ -384,7 +441,7 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
                     break;
             }
 
-            return $"{propertyName} {filterOperator} {filterValue}";
+            return $"{propertyName.Replace(".", "/")} {filterOperator} {filterValue}";
         }
 
         private string ConstructConditionFilter<T>(Filter filter)

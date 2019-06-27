@@ -117,19 +117,41 @@ namespace CloudFabric.Libraries.Search.Attributes
                 return GetPropertyTypeCode(pathName, type);
             }
 
-            PropertyInfo prop = type.GetProperty(pathParts[0]);
+            MemberInfo[] members = type.GetMember(pathParts[0]);
 
-            Type propType;
-            if (prop.PropertyType.GetGenericTypeDefinition() == typeof(List<>))
+            if(members.Length == 0)
             {
-                propType = prop.PropertyType.GetGenericArguments()[0];
-            }
-            else
-            {
-                propType = prop.PropertyType;
+                throw new Exception($"Failed to get member {pathParts[0]} from type {type.Name}");
             }
 
-            return GetPropertyPathTypeCode(string.Join(".", pathParts.Skip(1)), propType);
+            var p = members[0];
+
+            Type propertyType = p.DeclaringType;
+
+            if(p.MemberType == MemberTypes.Method || p.MemberType == MemberTypes.Constructor || p.MemberType == MemberTypes.Event)
+            {
+                throw new Exception($"It's not possible to search by ${pathParts[0]} member of type ${type.Name} since it's not field or property");
+            }
+            else if (p.MemberType == MemberTypes.Property)
+            {
+                propertyType = (p as PropertyInfo).PropertyType;
+            }
+            else if (p.MemberType == MemberTypes.Field)
+            {
+                propertyType = (p as FieldInfo).FieldType;
+            }
+
+            if(propertyType.GetTypeInfo().IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                propertyType = propertyType.GetGenericArguments()[0];
+            }
+
+            if (propertyType.GetType().IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>))
+            {
+                propertyType = Nullable.GetUnderlyingType(propertyType);
+            }
+
+            return GetPropertyPathTypeCode(string.Join(".", pathParts.Skip(1)), propertyType);
         }
 
         public static TypeCode GetPropertyTypeCode(string propertyName, Type type)
