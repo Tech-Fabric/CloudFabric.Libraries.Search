@@ -8,5 +8,12 @@
     <PackageReference Include="Microsoft.ApplicationInsights" Version="2.10.0" />
     <PackageReference Include="Microsoft.Azure.Search" Version="9.0.1" />
   </ItemGroup>
+  
+  <ItemGroup>
+    <ProjectReference Include="..\CloudFabric.Libraries.Search.Api\CloudFabric.Libraries.Search.Api.csproj" />
+    <ProjectReference Include="..\CloudFabric.Libraries.Search.Attributes\CloudFabric.Libraries.Search.Attributes.csproj" />
+    <ProjectReference Include="..\CloudFabric.Libraries.Search.Services\CloudFabric.Libraries.Search.Services.csproj" />
+    <ProjectReference Include="..\CloudFabric.Libraries.Search\CloudFabric.Libraries.Search.csproj" />
+  </ItemGroup>
 
 </Project>

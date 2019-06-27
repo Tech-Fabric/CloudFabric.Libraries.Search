@@ -10,4 +10,9 @@
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\CloudFabric.Libraries.Search.Attributes\CloudFabric.Libraries.Search.Attributes.csproj" />
+    <ProjectReference Include="..\CloudFabric.Libraries.Search.Harvester\CloudFabric.Libraries.Search.Harvester.csproj" />
+  </ItemGroup>
+
 </Project>
