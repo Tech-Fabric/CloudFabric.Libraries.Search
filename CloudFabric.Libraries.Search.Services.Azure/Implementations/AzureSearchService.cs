@@ -355,7 +355,7 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
                     propertyType = propertyType.GetGenericArguments()[0];
                 }
 
-                if (propertyType.Namespace == "System")
+                if (propertyType.Namespace == "System" || propertyType.BaseType.Name == "Enum")
                 {
                     propertiesToSelect.Add(p.Name);
                 }
