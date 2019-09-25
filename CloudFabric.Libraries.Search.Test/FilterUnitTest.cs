@@ -32,6 +32,14 @@ namespace CloudFabric.Libraries.Search.Test
         public string Name { get; set; }
 
         public int? TestNullableInt { get; set; }
+
+        public TestEnum TestEnumProperty { get; set; }
+    }
+
+    public enum TestEnum
+    {
+        One = 1,
+        Two = 2
     }
 
     [TestClass]
@@ -150,6 +158,19 @@ namespace CloudFabric.Libraries.Search.Test
             Assert.IsTrue(filter.PropertyName == "Name");
             Assert.IsTrue(filter.Operator == "ne");
             Assert.IsTrue(filter.Value.ToString() == "test5");
+        }
+
+        [TestMethod]
+        public void TestEnumFilter()
+        {
+            var testRequest = new TestRequest();
+
+            var filter = Filter.Where<TestModel>(
+                o => o.TestEnumProperty == TestEnum.One);
+
+            Assert.IsTrue(filter.PropertyName == "TestEnumProperty");
+            Assert.IsTrue(filter.Operator == "eq");
+            Assert.IsTrue(filter.Value.ToString() == "1");
         }
     }
 }

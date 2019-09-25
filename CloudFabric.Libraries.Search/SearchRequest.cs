@@ -69,7 +69,7 @@ namespace CloudFabric.Libraries.Search
             {
                 return (expression as ConstantExpression).Value;
             }
-            else if(expression.NodeType == ExpressionType.MemberAccess)
+            else if (expression.NodeType == ExpressionType.MemberAccess)
             {
                 MemberInfo memberInfo = (expression as MemberExpression).Member;
                 if (memberInfo.MemberType == MemberTypes.Field)
@@ -81,6 +81,11 @@ namespace CloudFabric.Libraries.Search
                 }
                 else if (memberInfo.MemberType == MemberTypes.Property)
                 {
+                    if ((expression as MemberExpression).Expression.NodeType == ExpressionType.Parameter)
+                    {
+                        return (expression as MemberExpression).Member.Name;
+                    }
+
                     // property is just a wrapper around field right?
                     PropertyInfo propertyInfo = (PropertyInfo)memberInfo;
                     var propertyValue = GetExpressionValue((expression as MemberExpression).Expression);
@@ -92,7 +97,7 @@ namespace CloudFabric.Libraries.Search
                     throw new Exception($"Expression member type is not supported: {memberInfo.MemberType}");
                 }
             }
-            else if(expression.NodeType == ExpressionType.Call)
+            else if (expression.NodeType == ExpressionType.Call)
             {
                 var methodCallExpression = (MethodCallExpression)expression;
 
@@ -112,7 +117,13 @@ namespace CloudFabric.Libraries.Search
                 var operand = (expression as UnaryExpression).Operand;
                 object expressionValue = GetExpressionValue(operand);
 
-                return Convert.ChangeType(expressionValue, targetType);
+                try
+                {
+                    return Convert.ChangeType(expressionValue, targetType);
+                }
+                catch (Exception) { }
+
+                return expressionValue;
             }
             else
             {
@@ -127,37 +138,37 @@ namespace CloudFabric.Libraries.Search
                 case ExpressionType.Equal:
                     var filterEq = new Filter();
                     filterEq.Operator = FilterOperator.Equal;
-                    filterEq.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
+                    filterEq.PropertyName = GetExpressionValue((expression as BinaryExpression).Left).ToString();
                     filterEq.Value = GetExpressionValue((expression as BinaryExpression).Right);
                     return filterEq;
                 case ExpressionType.NotEqual:
                     var filterNEq = new Filter();
                     filterNEq.Operator = FilterOperator.NotEqual;
-                    filterNEq.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
+                    filterNEq.PropertyName = GetExpressionValue((expression as BinaryExpression).Left).ToString();
                     filterNEq.Value = GetExpressionValue((expression as BinaryExpression).Right);
                     return filterNEq;
                 case ExpressionType.GreaterThan:
                     var filterGt = new Filter();
                     filterGt.Operator = FilterOperator.Greater;
-                    filterGt.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
+                    filterGt.PropertyName = GetExpressionValue((expression as BinaryExpression).Left).ToString();
                     filterGt.Value = GetExpressionValue((expression as BinaryExpression).Right);
                     return filterGt;
                 case ExpressionType.GreaterThanOrEqual:
                     var filterGe = new Filter();
                     filterGe.Operator = FilterOperator.GreaterOrEqual;
-                    filterGe.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
+                    filterGe.PropertyName = GetExpressionValue((expression as BinaryExpression).Left).ToString();
                     filterGe.Value = GetExpressionValue((expression as BinaryExpression).Right);
                     return filterGe;
                 case ExpressionType.LessThan:
                     var filterLt = new Filter();
                     filterLt.Operator = FilterOperator.Lower;
-                    filterLt.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
+                    filterLt.PropertyName = GetExpressionValue((expression as BinaryExpression).Left).ToString();
                     filterLt.Value = GetExpressionValue((expression as BinaryExpression).Right);
                     return filterLt;
                 case ExpressionType.LessThanOrEqual:
                     var filterLe = new Filter();
                     filterLe.Operator = FilterOperator.LowerOrEqual;
-                    filterLe.PropertyName = ((expression as BinaryExpression).Left as MemberExpression).Member.Name;
+                    filterLe.PropertyName = GetExpressionValue((expression as BinaryExpression).Left).ToString();
                     filterLe.Value = GetExpressionValue((expression as BinaryExpression).Right);
                     return filterLe;
                 case ExpressionType.AndAlso:
