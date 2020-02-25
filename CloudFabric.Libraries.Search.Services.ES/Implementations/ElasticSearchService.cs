@@ -465,18 +465,19 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                             break;
                     }
                     break;
-                case TypeCode.Decimal:
-                case TypeCode.Double:
-                case TypeCode.Int16:
-                case TypeCode.Int32:
-                case TypeCode.Int64:
-                case TypeCode.Byte:
-                case TypeCode.Boolean:
-                    filterValue = filter.Value == null ? "null" : filter.Value.ToString().ToLower();
-                    break;
                 case TypeCode.Char:
                 case TypeCode.String:
                     filterValue = $"\"{filter.Value}\"";
+                    break;
+                //case TypeCode.Decimal:
+                //case TypeCode.Double:
+                //case TypeCode.Int16:
+                //case TypeCode.Int32:
+                //case TypeCode.Int64:
+                //case TypeCode.Byte:
+                //case TypeCode.Boolean:
+                default:
+                    filterValue = filter.Value == null ? "null" : filter.Value.ToString().ToLower();
                     break;
             }
 
