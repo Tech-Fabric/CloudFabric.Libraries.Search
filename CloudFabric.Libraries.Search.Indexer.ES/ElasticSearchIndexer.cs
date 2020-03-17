@@ -81,6 +81,10 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                                         .Filters("not-empty")
                                         .CharFilters("alphanum-only")
                                     )
+                                    .Custom("keyword-custom", c => c
+                                        .Tokenizer("keyword")
+                                        .Filters("lowercase")
+                                    )
                                 )
                                 .CharFilters(charFilters => charFilters
                                     .PatternReplace("digits-only", p => p.Pattern("[^\\d]").Replacement(""))
