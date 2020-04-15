@@ -29,7 +29,7 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
             }
         }
 
-        public async Task<bool> CreateIndex<T>(string forcedNewIndexName = null) where T : class
+        public async Task<string> CreateIndex<T>(string forcedNewIndexName = null) where T : class
         {
             try
             {
@@ -145,15 +145,15 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
                 await _serviceClient.Indexes.CreateOrUpdateAsync(definition);
 
                 Console.WriteLine($"Created index " + definition.Name);
-
+                return definition.Name;
+                
                 //await _serviceClient.Indexes.DeleteAsync(indexName);
             }
             catch (Exception ex)
             {
                 Console.WriteLine("Error creating index: {0}\r\n", ex.Message);
+                throw;
             }
-
-            return true;
         }
 
         public Field ConstructFieldForProperty(PropertyInfo prop, SearchablePropertyAttribute propertyAttribute)
