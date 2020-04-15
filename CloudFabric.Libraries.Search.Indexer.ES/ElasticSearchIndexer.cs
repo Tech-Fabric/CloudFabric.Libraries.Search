@@ -30,7 +30,7 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
             throw new NotImplementedException();
         }
 
-        public async Task<bool> CreateIndex<T>(string newIndexName = null) where T : class
+        public async Task<string> CreateIndex<T>(string newIndexName = null) where T : class
         {
             try
             {
@@ -120,13 +120,13 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                 };
                 await _client.MapAsync(putMappingRequest);
                 Console.WriteLine($"Updated mapping for index " + newIndexName);
+                return newIndexName;
             }
             catch (Exception ex)
-            {
-                return false;
+            {                
+                Console.WriteLine("Error creating index: {0}\r\n", ex.Message);
+                throw;
             }
-
-            return true;
         }
 
         private IProperties GetPropertiesDescriptors<T>() where T : class
