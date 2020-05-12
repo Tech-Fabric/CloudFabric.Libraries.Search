@@ -30,7 +30,7 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
             throw new NotImplementedException();
         }
 
-        public async Task<string> CreateIndex<T>(string newIndexName = null) where T : class
+        public async Task<string> CreateIndex<T>(string forcedNewIndexName = null) where T : class
         {
             try
             {
@@ -39,7 +39,8 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                     _client.ConnectionSettings.IdProperties.Add(typeof(T), SearchableModelAttribute.GetKeyPropertyName<T>());
                 }
 
-                if (newIndexName == null)
+                var newIndexName = forcedNewIndexName;
+                if (forcedNewIndexName == null)
                 {
                     var indexName = SearchableModelAttribute.GetIndexName(typeof(T));
 
@@ -51,18 +52,22 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                     string newIndexVersionSuffix = DateTime.Now.ToString("yyyyMMddHHmmss");
 
                     newIndexName = indexName + "-" + newIndexVersionSuffix;
+                }
 
-                    var response = await _client.IndexExistsAsync(
-                        new IndexExistsRequest(newIndexName)
+                var response = await _client.IndexExistsAsync(
+                    new IndexExistsRequest(newIndexName)
+                );
+
+                if (response.Exists && forcedNewIndexName == null)
+                {
+                    await _client.DeleteIndexAsync(
+                        new DeleteIndexRequest(newIndexName)
                     );
-                    if (response.Exists)
-                    {
-                        await _client.DeleteIndexAsync(
-                            new DeleteIndexRequest(newIndexName)
-                        );
-                        Console.WriteLine($"Deleted index " + newIndexName);
-                    }
+                    Console.WriteLine($"Deleted index " + newIndexName);
+                }
 
+                if (!response.Exists || forcedNewIndexName == null)
+                {
                     var descriptor = new CreateIndexDescriptor(newIndexName)
                         .Settings(s => s
                             .Analysis(analysis => analysis
