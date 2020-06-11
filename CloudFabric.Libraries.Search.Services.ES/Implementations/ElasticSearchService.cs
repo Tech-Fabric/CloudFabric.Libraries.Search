@@ -58,6 +58,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
 
             SearchResult<ResultT> results = new SearchResult<ResultT>();
 
+            results.DebugInformation = searchResponse.DebugInformation;
             results.TotalRecordsFound = searchResponse.Total == -1 ? 0 : searchResponse.Total;
 
             foreach (var hit in searchResponse.Hits)

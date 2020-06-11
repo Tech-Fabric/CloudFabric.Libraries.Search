@@ -36,5 +36,6 @@ namespace CloudFabric.Libraries.Search
         public long? TotalRecordsFound = 0;
         public string SearchId;
         public string IndexName;
+        public string DebugInformation;
     }
 }
