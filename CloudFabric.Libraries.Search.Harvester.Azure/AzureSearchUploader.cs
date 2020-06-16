@@ -37,7 +37,7 @@ namespace CloudFabric.Libraries.Search.Harvester.Azure
             }
         }
 
-        public async Task<bool> Upload<T>(IEnumerable<T> records) where T : class
+        public async Task<SearchUploadResult> Upload<T>(IEnumerable<T> records) where T : class
         {
             using (var operation = _telemetryClient.StartOperation<RequestTelemetry>("uploadSearchRecords"))
             {
@@ -73,13 +73,18 @@ namespace CloudFabric.Libraries.Search.Harvester.Azure
                 // We cannot just throw all 200k+ records to azure search, that causes out of memory and http payload too large exceptions.
                 var recordsInOneStep = 200;
                 var totalRecords = records.Count();
-                var uploadedRecords = 0;
 
-                while (uploadedRecords < totalRecords)
+                var result = new SearchUploadResult()
+                {
+                    Success = true,
+                    Uploaded = 0
+                };
+
+                while (result.Uploaded < totalRecords)
                 {
                     var uploadSerializationStartTime = DateTime.UtcNow;
 
-                    var recordsToUpload = records.Skip(uploadedRecords).Take(recordsInOneStep);
+                    var recordsToUpload = records.Skip(result.Uploaded).Take(recordsInOneStep);
 
                     var actions = new List<IndexAction<T>>();
 
@@ -109,17 +114,20 @@ namespace CloudFabric.Libraries.Search.Harvester.Azure
                     catch (IndexBatchException e)
                     {
                         _telemetryClient.TrackException(e);
-                        return false;
+
+                        result.DebugInformation = e.Message;
+                        result.Success = false;
+                        return result;
                     }
 
                     actions.Clear();
 
-                    uploadedRecords += recordsToUpload.Count();
+                    result.Uploaded += recordsToUpload.Count();
 
                     //_logger.Info("Upload statistic:", new { UploadedRecords = uploadedRecords, TotalRecords = totalRecords, IndexName = indexName });
                 }
 
-                return true;
+                return result;
             }
         }
 

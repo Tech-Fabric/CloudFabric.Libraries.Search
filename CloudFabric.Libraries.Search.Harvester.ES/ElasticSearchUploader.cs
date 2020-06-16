@@ -27,7 +27,7 @@ namespace CloudFabric.Libraries.Search.Harvester.ES
             _indexMapping = indexMapping == null ? new Dictionary<string, string>() : indexMapping;
         }
 
-        public async Task<bool> Upload<T>(IEnumerable<T> records) where T : class
+        public async Task<SearchUploadResult> Upload<T>(IEnumerable<T> records) where T : class
         {
             if (!_client.ConnectionSettings.IdProperties.ContainsKey(typeof(T)))
             {
@@ -37,32 +37,41 @@ namespace CloudFabric.Libraries.Search.Harvester.ES
             // We cannot just throw all 200k+ records to azure search, that causes out of memory and http payload too large exceptions.
             var recordsInOneStep = 1000;
             var totalRecords = records.Count();
-            var uploadedRecords = 0;
 
             var indexType = SearchableModelAttribute.GetIndexName(typeof(T));
             var indexName = _indexMapping[indexType];
 
-            while (uploadedRecords < totalRecords)
+            var result = new SearchUploadResult()
             {
-                var recordsToUpload = records.Skip(uploadedRecords).Take(recordsInOneStep);
+                Success = true,
+                Uploaded = 0
+            };
+
+            while (result.Uploaded < totalRecords)
+            {
+                var recordsToUpload = records.Skip(result.Uploaded).Take(recordsInOneStep);
 
                 try
                 {
-                    await _client.IndexManyAsync(recordsToUpload, indexName);
+                    var response = await _client.IndexManyAsync(recordsToUpload, indexName);
+
+                    result.DebugInformation = response.DebugInformation;
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine("Failed to index some of the documents.");
 
-                    return false;
+                    result.DebugInformation = e.Message;
+                    result.Success = false;
+                    return result;
                 }
 
-                uploadedRecords += recordsToUpload.Count();
+                result.Uploaded += recordsToUpload.Count();
 
-                Console.WriteLine($"{uploadedRecords}/{totalRecords} uploaded...");
+                Console.WriteLine($"{result.Uploaded}/{totalRecords} uploaded...");
             }
 
-            return true;
+            return result;
         }
         public bool Delete<T>(IEnumerable<string> idList) where T : class
         {
