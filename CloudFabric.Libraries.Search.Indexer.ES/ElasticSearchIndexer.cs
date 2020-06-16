@@ -156,6 +156,10 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                     {
                         propertyType = Nullable.GetUnderlyingType(propertyType);
                     }
+                    if (propertyType.IsGenericType && propertyType.GetGenericTypeDefinition() == typeof(List<>))
+                    {
+                        propertyType = propertyType.GetMethod("get_Item").ReturnType;
+                    }
 
                     switch (Type.GetTypeCode(propertyType))
                     {
