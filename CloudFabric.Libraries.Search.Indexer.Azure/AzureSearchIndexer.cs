@@ -34,7 +34,7 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
             throw new Exception("Not Implemented");
         }
 
-        public async Task DeleteIndex()
+        public async Task DeleteIndex(string indexName)
         {
             throw new Exception("Not Implemented");
         }

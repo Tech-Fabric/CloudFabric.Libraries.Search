@@ -8,6 +8,6 @@ namespace CloudFabric.Libraries.Search.Indexer
         Task CreateSynonymMaps(Dictionary<string, List<string>> synonymMaps);
         Task<string> CreateIndex<T>(string newIndexName = null) where T : class;
         Task<string> ListIndices();
-        Task DeleteIndex();
+        Task DeleteIndex(string indexName);
     }
 }
