@@ -111,7 +111,7 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                     }
                     else
                     {
-                        var message = $"Index creation failed for index {newIndexName}!";
+                        var message = $"Index creation failed for index {newIndexName}. DebugInformation: ${createIndexResponse.DebugInformation}!";
                         Console.WriteLine(message);
                         throw new Exception(message);
                     }
@@ -215,7 +215,10 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                             });
                             break;
                         case TypeCode.Object:
+                            //if (propertyAttribute.IsNested)
+                            //{
                             properties = properties.Nested<object>(p => p.Name(prop.Name));
+                            //}
                             break;
                         default:
                             throw new Exception(
