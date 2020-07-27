@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Reflection;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 
 namespace CloudFabric.Libraries.Search.Indexer.ES
 {
@@ -28,6 +29,20 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
         public async Task CreateSynonymMaps(Dictionary<string, List<string>> synonymMaps)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<string> ListIndices()
+        {
+            var response = await _client.CatIndicesAsync();
+
+            var output = JsonConvert.SerializeObject(response.Records);
+
+            return output;
+        }
+
+        public async Task DeleteIndex(string indexName)
+        {
+            await _client.DeleteIndexAsync(indexName);
         }
 
         public async Task<string> CreateIndex<T>(string forcedNewIndexName = null) where T : class

@@ -29,6 +29,16 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
             }
         }
 
+        public async Task<string> ListIndices()
+        {
+            throw new Exception("Not Implemented");
+        }
+
+        public async Task DeleteIndex()
+        {
+            throw new Exception("Not Implemented");
+        }
+
         public async Task<string> CreateIndex<T>(string forcedNewIndexName = null) where T : class
         {
             try
