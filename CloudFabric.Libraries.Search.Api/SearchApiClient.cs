@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -132,6 +133,11 @@ namespace CloudFabric.Libraries.Search.Api
             var result = await _httpClient.PostAsync("search", content);
 
             var response = await result.Content.ReadAsStringAsync();
+
+            if (result.StatusCode != HttpStatusCode.OK && result.StatusCode != HttpStatusCode.Accepted && result.StatusCode != HttpStatusCode.Created)
+            {
+                throw new Exception($"Search error. Status code: {result.StatusCode}. Response content: {response}");
+            }
 
             try
             {
