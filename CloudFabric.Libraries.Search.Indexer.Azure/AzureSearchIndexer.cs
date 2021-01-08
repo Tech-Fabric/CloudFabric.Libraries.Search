@@ -143,7 +143,7 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
                 string newIndexVersionSuffix = DateTime.Now.ToString("yyyyMMddHHmmss");
                 string newIndexName = indexName + "-" + newIndexVersionSuffix;
 
-                var definition = new Index()
+                var definition = new Microsoft.Azure.Search.Models.Index()
                 {
                     Name = newIndexName,
                     Fields = fields,
