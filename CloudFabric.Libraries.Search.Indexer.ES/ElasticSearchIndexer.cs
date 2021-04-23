@@ -33,7 +33,7 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
 
         public async Task<string> ListIndices()
         {
-            var response = await _client.CatIndicesAsync();
+            var response = await _client.Cat.IndicesAsync();
 
             var output = JsonConvert.SerializeObject(response.Records);
 
@@ -42,7 +42,7 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
 
         public async Task DeleteIndex(string indexName)
         {
-            await _client.DeleteIndexAsync(indexName);
+            await _client.Indices.DeleteAsync(indexName);
         }
 
         public async Task<string> CreateIndex<T>(string forcedNewIndexName = null) where T : class
@@ -69,13 +69,13 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                     newIndexName = indexName + "-" + newIndexVersionSuffix;
                 }
 
-                var response = await _client.IndexExistsAsync(
+                var response = await _client.Indices.ExistsAsync(
                     new IndexExistsRequest(newIndexName)
                 );
 
                 if (response.Exists && forcedNewIndexName == null)
                 {
-                    await _client.DeleteIndexAsync(
+                    await _client.Indices.DeleteAsync(
                         new DeleteIndexRequest(newIndexName)
                     );
                     Console.WriteLine($"Deleted index " + newIndexName);
@@ -119,7 +119,7 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                             .Setting("max_result_window", 1000000)
                         );
 
-                    var createIndexResponse = await _client.CreateIndexAsync(descriptor);
+                    var createIndexResponse = await _client.Indices.CreateAsync(descriptor);
                     if (createIndexResponse.Acknowledged)
                     {
                         Console.WriteLine($"Created index " + newIndexName);
