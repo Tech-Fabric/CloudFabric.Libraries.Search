@@ -33,9 +33,9 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
 
         public async Task<string> ListIndices()
         {
-            var response =  _client.Cat;
+            var response = await _client.Cat.IndicesAsync();
 
-            var output = JsonConvert.SerializeObject(response.Nodes());
+            var output = JsonConvert.SerializeObject(response.Records);
 
             return output;
         }
