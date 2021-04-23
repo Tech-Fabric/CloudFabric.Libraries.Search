@@ -67,11 +67,11 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                 resultRecord.Record = hit.Source;
                 resultRecord.Score = hit.Score.GetValueOrDefault();
 
-                var highlights = hit.Highlights;
+                var highlights = hit.Highlight;
 
-                foreach (var h in hit.Highlights)
+                foreach (var h in hit.Highlight)
                 {
-                    resultRecord.Highlights.Add(h.Key, h.Value.Highlights.ToList());
+                    resultRecord.Highlights.Add(h.Key, h.Value.ToList());
                 }
 
                 results.Records.Add(resultRecord);
