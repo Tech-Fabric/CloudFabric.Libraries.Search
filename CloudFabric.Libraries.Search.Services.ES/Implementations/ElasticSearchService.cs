@@ -445,7 +445,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             {
                 case TypeCode.DateTime:
                     filterOperator = ":";
-                    var dateFilterValue = ((DateTime)filter.Value).ToString("o");
+                    var dateFilterValue = filter.Value == null ? "null" : ((DateTime)filter.Value).ToString("o");
                     switch (filter.Operator)
                     {
                         case FilterOperator.NotEqual:
