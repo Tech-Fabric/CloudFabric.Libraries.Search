@@ -56,6 +56,11 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                 return s;
             });
 
+            if (!searchResponse.IsValid)
+            {
+                throw new Exception($"Server Error: {searchResponse?.ServerError?.Error.ToString() ?? ""} OriginalException: {searchResponse?.OriginalException?.Message ?? ""}");
+            }
+
             SearchResult<ResultT> results = new SearchResult<ResultT>();
 
             results.DebugInformation = searchResponse.DebugInformation;
