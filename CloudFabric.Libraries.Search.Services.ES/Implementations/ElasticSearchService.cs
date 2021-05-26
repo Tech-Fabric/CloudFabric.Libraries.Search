@@ -6,6 +6,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using CloudFabric.Libraries.Search.Services.ES.Exceprions;
 
 namespace CloudFabric.Libraries.Search.Services.ES.Implementations
 {
@@ -55,6 +56,11 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                 s = s.Highlight(ConstructHighlight);
                 return s;
             });
+
+            if (!searchResponse.IsValid)
+            {     
+                throw new ElasticSearchQueryException(searchResponse.ServerError, searchResponse.OriginalException, $"ElasticSearch service thrown exception");
+            }
 
             SearchResult<ResultT> results = new SearchResult<ResultT>();
 
