@@ -6,7 +6,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using CloudFabric.Libraries.Search.Services.ES.Exceprions;
+using CloudFabric.Libraries.Search.Services.ES.Exceptions;
 
 namespace CloudFabric.Libraries.Search.Services.ES.Implementations
 {

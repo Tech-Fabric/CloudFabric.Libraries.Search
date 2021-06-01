@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace CloudFabric.Libraries.Search.Services.ES.Exceprions
+namespace CloudFabric.Libraries.Search.Services.ES.Exceptions
 {
     public class ElasticSearchQueryException : Exception
     {
