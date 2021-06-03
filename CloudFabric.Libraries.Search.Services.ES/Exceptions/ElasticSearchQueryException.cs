@@ -7,15 +7,11 @@ namespace CloudFabric.Libraries.Search.Services.ES.Exceptions
 {
     public class ElasticSearchQueryException : Exception
     {
-        public ServerError ServerError { get; }
+        public ServerError ServerError { get; }              
 
-        public Exception OriginalException { get; }
-        
-
-        public ElasticSearchQueryException(ServerError serverError, Exception originalException, string message) : base(message)
+        public ElasticSearchQueryException(ServerError serverError, Exception originalException, string message) : base(message,originalException)
         {
-            ServerError = serverError;
-            OriginalException = originalException;            
+            ServerError = serverError;                        
         }
     }
 }
