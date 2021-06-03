@@ -59,7 +59,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
 
             if (!searchResponse.IsValid)
             {     
-                throw new ElasticSearchQueryException(searchResponse.ServerError, searchResponse.OriginalException, $"ElasticSearch service thrown exception");
+                throw new ElasticSearchQueryException(searchResponse.ServerError, $"ElasticSearch service thrown exception");
             }
 
             SearchResult<ResultT> results = new SearchResult<ResultT>();
