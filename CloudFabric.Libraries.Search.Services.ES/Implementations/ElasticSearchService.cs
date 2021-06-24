@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CloudFabric.Libraries.Search.Services.ES.Exceptions;
+using Newtonsoft.Json;
 
 namespace CloudFabric.Libraries.Search.Services.ES.Implementations
 {
@@ -59,7 +60,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
 
             if (!searchResponse.IsValid)
             {     
-                throw new ElasticSearchQueryException(searchResponse.ServerError, $"ElasticSearch service thrown exception");
+                throw new ElasticSearchQueryException(searchResponse.ServerError, $"ElasticSearch service thrown exception ${JsonConvert.SerializeObject(searchRequest)}");
             }
 
             SearchResult<ResultT> results = new SearchResult<ResultT>();
