@@ -31,7 +31,11 @@ namespace CloudFabric.Libraries.Search.Api
             }
 
             _httpClient.BaseAddress = new Uri(_baseAddress);
-            _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            var mediaType = new MediaTypeWithQualityHeaderValue("application/json");
+            if (!_httpClient.DefaultRequestHeaders.Accept.Contains(mediaType))
+            {
+                _httpClient.DefaultRequestHeaders.Accept.Add(mediaType);
+            }
         }
 
         private async Task<string>
