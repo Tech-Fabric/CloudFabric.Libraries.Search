@@ -104,6 +104,24 @@ namespace CloudFabric.Libraries.Search.Attributes
             return GetSearchableProperties<T>().Keys.Select(p => p.Name).ToList();
         }
 
+        public static List<PropertyInfo> GetProperties<T>()
+        {
+            List<PropertyInfo> properties = new List<PropertyInfo>();
+
+            PropertyInfo[] props = typeof(T).GetProperties();
+            foreach (PropertyInfo prop in props)
+            {
+                properties.Add(prop);
+            }
+
+            return properties;
+        }
+
+        public static List<string> GetPropertyNames<T>()
+        {
+            return GetProperties<T>().Select(p => p.Name).ToList();
+        }
+
         public static TypeCode GetPropertyPathTypeCode<T>(string pathName)
         {
             return GetPropertyPathTypeCode(pathName, typeof(T));

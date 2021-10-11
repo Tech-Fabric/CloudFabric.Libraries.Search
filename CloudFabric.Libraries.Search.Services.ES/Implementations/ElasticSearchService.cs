@@ -426,7 +426,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                 return "";
             }
 
-            bool isField = SearchableModelAttribute.GetSearchablePropertyNames<T>().Contains(filter.Value?.ToString() ?? string.Empty);
+            bool isField = SearchableModelAttribute.GetPropertyNames<T>().Contains(filter.Value?.ToString() ?? string.Empty);
 
             var filterOperator = "";
             switch (filter.Operator)
