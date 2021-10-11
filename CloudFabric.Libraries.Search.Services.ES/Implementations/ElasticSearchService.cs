@@ -426,6 +426,18 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                 return "";
             }
 
+            bool isValueField = false;
+
+            try
+            {
+                SearchableModelAttribute.GetPropertyPathTypeCode<T>(filter.Value.ToString());
+                isValueField = true;
+            }
+            catch
+            {
+
+            }
+
             var filterOperator = "";
             switch (filter.Operator)
             {
@@ -451,31 +463,48 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             switch (SearchableModelAttribute.GetPropertyPathTypeCode<T>(filter.PropertyName))
             {
                 case TypeCode.DateTime:
-                    filterOperator = ":";
-                    var dateFilterValue = filter.Value == null ? "null" : ((DateTime)filter.Value).ToString("o");
-                    switch (filter.Operator)
+                    filterOperator = ":";                    
+
+                    if (isValueField)
                     {
-                        case FilterOperator.NotEqual:
-                        case FilterOperator.Equal:
-                            filterValue = $"\"{dateFilterValue}\"";
-                            break;
-                        case FilterOperator.Greater:
-                            filterValue = $"{{{dateFilterValue} TO *}}";
-                            break;
-                        case FilterOperator.GreaterOrEqual:
-                            filterValue = $"[{dateFilterValue} TO *]";
-                            break;
-                        case FilterOperator.Lower:
-                            filterValue = $"{{* TO {dateFilterValue}}}";
-                            break;
-                        case FilterOperator.LowerOrEqual:
-                            filterValue = $"[* TO {dateFilterValue}]";
-                            break;
+                        filterValue = filter.Value.ToString();
+                    }
+                    else
+                    {
+                        var dateFilterValue = filter.Value == null
+                            ? "null"
+                            : ((DateTime)filter.Value).ToString("o");
+                        switch (filter.Operator)
+                        {
+                            case FilterOperator.NotEqual:
+                            case FilterOperator.Equal:
+                                filterValue = $"\"{dateFilterValue}\"";
+                                break;
+                            case FilterOperator.Greater:
+                                filterValue = $"{{{dateFilterValue} TO *}}";
+                                break;
+                            case FilterOperator.GreaterOrEqual:
+                                filterValue = $"[{dateFilterValue} TO *]";
+                                break;
+                            case FilterOperator.Lower:
+                                filterValue = $"{{* TO {dateFilterValue}}}";
+                                break;
+                            case FilterOperator.LowerOrEqual:
+                                filterValue = $"[* TO {dateFilterValue}]";
+                                break;
+                        }
                     }
                     break;
                 case TypeCode.Char:
                 case TypeCode.String:
-                    filterValue = $"\"{filter.Value}\"";
+                    if (!isValueField)
+                    {
+                        filterValue = $"\"{filter.Value}\"";
+                    }
+                    else
+                    {
+                        filterValue = filter.Value.ToString();
+                    }
                     break;
                 //case TypeCode.Decimal:
                 //case TypeCode.Double:
@@ -485,7 +514,14 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                 //case TypeCode.Byte:
                 //case TypeCode.Boolean:
                 default:
-                    filterValue = filter.Value == null ? "null" : filter.Value.ToString().ToLower();
+                    if (!isValueField)
+                    {
+                        filterValue = filter.Value == null ? "null" : filter.Value.ToString().ToLower();
+                    }
+                    else
+                    {
+                        filterValue = filter.Value.ToString();
+                    }
                     break;
             }
 
