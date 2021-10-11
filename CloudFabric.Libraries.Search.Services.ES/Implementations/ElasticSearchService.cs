@@ -460,17 +460,17 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             }
 
             var filterValue = "";
-            switch (SearchableModelAttribute.GetPropertyPathTypeCode<T>(filter.PropertyName))
-            {
-                case TypeCode.DateTime:
-                    filterOperator = ":";                    
 
-                    if (isField)
-                    {
-                        filterValue = filter.Value.ToString();
-                    }
-                    else
-                    {
+            if (isField)
+            {
+                filterValue = filter.Value.ToString();
+            }
+            else
+            {
+                switch (SearchableModelAttribute.GetPropertyPathTypeCode<T>(filter.PropertyName))
+                {
+                    case TypeCode.DateTime:
+                        filterOperator = ":";
                         var dateFilterValue = filter.Value == null
                             ? "null"
                             : ((DateTime)filter.Value).ToString("o");
@@ -493,36 +493,22 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                                 filterValue = $"[* TO {dateFilterValue}]";
                                 break;
                         }
-                    }
-                    break;
-                case TypeCode.Char:
-                case TypeCode.String:
-                    if (!isField)
-                    {
+                        break;
+                    case TypeCode.Char:
+                    case TypeCode.String:
                         filterValue = $"\"{filter.Value}\"";
-                    }
-                    else
-                    {
-                        filterValue = filter.Value.ToString();
-                    }
-                    break;
-                //case TypeCode.Decimal:
-                //case TypeCode.Double:
-                //case TypeCode.Int16:
-                //case TypeCode.Int32:
-                //case TypeCode.Int64:
-                //case TypeCode.Byte:
-                //case TypeCode.Boolean:
-                default:
-                    if (!isField)
-                    {
+                        break;
+                    //case TypeCode.Decimal:
+                    //case TypeCode.Double:
+                    //case TypeCode.Int16:
+                    //case TypeCode.Int32:
+                    //case TypeCode.Int64:
+                    //case TypeCode.Byte:
+                    //case TypeCode.Boolean:
+                    default:
                         filterValue = filter.Value == null ? "null" : filter.Value.ToString().ToLower();
-                    }
-                    else
-                    {
-                        filterValue = filter.Value.ToString();
-                    }
-                    break;
+                        break;
+                }
             }
 
             var condition = $"{filter.PropertyName}{filterOperator}{filterValue}";
