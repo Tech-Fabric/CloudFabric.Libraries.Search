@@ -426,6 +426,8 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                 return "";
             }
 
+            bool isField = SearchableModelAttribute.GetSearchablePropertyNames<T>().Contains(filter.Value?.ToString() ?? string.Empty);
+
             var filterOperator = "";
             switch (filter.Operator)
             {
@@ -448,45 +450,55 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             }
 
             var filterValue = "";
-            switch (SearchableModelAttribute.GetPropertyPathTypeCode<T>(filter.PropertyName))
+
+            if (isField)
             {
-                case TypeCode.DateTime:
-                    filterOperator = ":";
-                    var dateFilterValue = filter.Value == null ? "null" : ((DateTime)filter.Value).ToString("o");
-                    switch (filter.Operator)
-                    {
-                        case FilterOperator.NotEqual:
-                        case FilterOperator.Equal:
-                            filterValue = $"\"{dateFilterValue}\"";
-                            break;
-                        case FilterOperator.Greater:
-                            filterValue = $"{{{dateFilterValue} TO *}}";
-                            break;
-                        case FilterOperator.GreaterOrEqual:
-                            filterValue = $"[{dateFilterValue} TO *]";
-                            break;
-                        case FilterOperator.Lower:
-                            filterValue = $"{{* TO {dateFilterValue}}}";
-                            break;
-                        case FilterOperator.LowerOrEqual:
-                            filterValue = $"[* TO {dateFilterValue}]";
-                            break;
-                    }
-                    break;
-                case TypeCode.Char:
-                case TypeCode.String:
-                    filterValue = $"\"{filter.Value}\"";
-                    break;
-                //case TypeCode.Decimal:
-                //case TypeCode.Double:
-                //case TypeCode.Int16:
-                //case TypeCode.Int32:
-                //case TypeCode.Int64:
-                //case TypeCode.Byte:
-                //case TypeCode.Boolean:
-                default:
-                    filterValue = filter.Value == null ? "null" : filter.Value.ToString().ToLower();
-                    break;
+                filterValue = filter.Value.ToString();
+            }
+            else
+            {
+                switch (SearchableModelAttribute.GetPropertyPathTypeCode<T>(filter.PropertyName))
+                {
+                    case TypeCode.DateTime:
+                        filterOperator = ":";
+                        var dateFilterValue = filter.Value == null
+                            ? "null"
+                            : ((DateTime)filter.Value).ToString("o");
+                        switch (filter.Operator)
+                        {
+                            case FilterOperator.NotEqual:
+                            case FilterOperator.Equal:
+                                filterValue = $"\"{dateFilterValue}\"";
+                                break;
+                            case FilterOperator.Greater:
+                                filterValue = $"{{{dateFilterValue} TO *}}";
+                                break;
+                            case FilterOperator.GreaterOrEqual:
+                                filterValue = $"[{dateFilterValue} TO *]";
+                                break;
+                            case FilterOperator.Lower:
+                                filterValue = $"{{* TO {dateFilterValue}}}";
+                                break;
+                            case FilterOperator.LowerOrEqual:
+                                filterValue = $"[* TO {dateFilterValue}]";
+                                break;
+                        }
+                        break;
+                    case TypeCode.Char:
+                    case TypeCode.String:
+                        filterValue = $"\"{filter.Value}\"";
+                        break;
+                    //case TypeCode.Decimal:
+                    //case TypeCode.Double:
+                    //case TypeCode.Int16:
+                    //case TypeCode.Int32:
+                    //case TypeCode.Int64:
+                    //case TypeCode.Byte:
+                    //case TypeCode.Boolean:
+                    default:
+                        filterValue = filter.Value == null ? "null" : filter.Value.ToString().ToLower();
+                        break;
+                }
             }
 
             var condition = $"{filter.PropertyName}{filterOperator}{filterValue}";
