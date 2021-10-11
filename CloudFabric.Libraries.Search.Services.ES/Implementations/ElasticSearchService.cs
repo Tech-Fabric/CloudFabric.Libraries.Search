@@ -426,17 +426,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                 return "";
             }
 
-            bool isField = false;
-
-            try
-            {
-                SearchableModelAttribute.GetPropertyPathTypeCode<T>(filter.Value.ToString());
-                isField = true;
-            }
-            catch
-            {
-
-            }
+            bool isField = SearchableModelAttribute.GetSearchablePropertyNames<T>().Contains(filter.Value?.ToString() ?? string.Empty);
 
             var filterOperator = "";
             switch (filter.Operator)
