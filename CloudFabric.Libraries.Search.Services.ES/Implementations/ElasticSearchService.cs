@@ -426,12 +426,12 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                 return "";
             }
 
-            bool isValueField = false;
+            bool isField = false;
 
             try
             {
                 SearchableModelAttribute.GetPropertyPathTypeCode<T>(filter.Value.ToString());
-                isValueField = true;
+                isField = true;
             }
             catch
             {
@@ -465,7 +465,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                 case TypeCode.DateTime:
                     filterOperator = ":";                    
 
-                    if (isValueField)
+                    if (isField)
                     {
                         filterValue = filter.Value.ToString();
                     }
@@ -497,7 +497,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                     break;
                 case TypeCode.Char:
                 case TypeCode.String:
-                    if (!isValueField)
+                    if (!isField)
                     {
                         filterValue = $"\"{filter.Value}\"";
                     }
@@ -514,7 +514,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                 //case TypeCode.Byte:
                 //case TypeCode.Boolean:
                 default:
-                    if (!isValueField)
+                    if (!isField)
                     {
                         filterValue = filter.Value == null ? "null" : filter.Value.ToString().ToLower();
                     }
