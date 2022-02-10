@@ -20,16 +20,16 @@ namespace CloudFabric.Libraries.Search.Harvester.Azure
         /// <summary>
         /// Allows remapping indexes stored on SearchAttributes to new names.
         /// </summary>
-        private Dictionary<string, string> _indexMapping;
+        private Dictionary<Type, string> _indexMapping;
 
-        public AzureSearchUploader(TelemetryClient telemetryClient, string searchServiceName, string apiKey, Dictionary<string, string> indexMapping = null)
+        public AzureSearchUploader(TelemetryClient telemetryClient, string searchServiceName, string apiKey, Dictionary<Type, string> indexMapping = null)
         {
             _telemetryClient = telemetryClient;
             _serviceClient = new SearchServiceClient(searchServiceName, new SearchCredentials(apiKey));
 
             if (indexMapping == null)
             {
-                _indexMapping = new Dictionary<string, string>();
+                _indexMapping = new Dictionary<Type, string>();
             }
             else
             {
@@ -41,17 +41,7 @@ namespace CloudFabric.Libraries.Search.Harvester.Azure
         {
             using (var operation = _telemetryClient.StartOperation<RequestTelemetry>("uploadSearchRecords"))
             {
-                var indexName = SearchableModelAttribute.GetIndexName(typeof(T));
-
-                if(indexName == null)
-                {
-                    throw new Exception($"Type {typeof(T).Name} does not have SearchableModelAttribute");
-                }
-
-                if (_indexMapping.ContainsKey(indexName))
-                {
-                    indexName = _indexMapping[indexName];
-                }
+                var indexName = _indexMapping[typeof(T)];
 
                 ISearchIndexClient indexClient = null;
 
@@ -135,13 +125,9 @@ namespace CloudFabric.Libraries.Search.Harvester.Azure
         {
             using (var operation = _telemetryClient.StartOperation<RequestTelemetry>("deleteSearchRecords"))
             {
-                var indexName = SearchableModelAttribute.GetIndexName(typeof(T));
-                string keyName = SearchableModelAttribute.GetKeyPropertyName<T>();
+                string keyName = SearchablePropertyAttribute.GetKeyPropertyName<T>();
 
-                if (_indexMapping.ContainsKey(indexName))
-                {
-                    indexName = _indexMapping[indexName];
-                }
+                var indexName = _indexMapping[typeof(T)];
 
                 ISearchIndexClient indexClient = null;
 

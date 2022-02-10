@@ -17,9 +17,9 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
         /// <summary>
         /// Allows remapping indexes stored on SearchAttributes to new names.
         /// </summary>
-        private Dictionary<string, string> _indexMapping;
+        private Dictionary<Type, string> _indexMapping;
 
-        public ElasticSearchService(string uri, string username, string password, Dictionary<string, string> indexMapping = null)
+        public ElasticSearchService(string uri, string username, string password, Dictionary<Type, string> indexMapping = null)
         {
             var _connectionSettings = new ConnectionSettings(new Uri(uri));
             _connectionSettings.BasicAuthentication(username, password);
@@ -28,7 +28,12 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
 
             _client = new ElasticClient(_connectionSettings);
 
-            _indexMapping = indexMapping == null ? new Dictionary<string, string>() : indexMapping;
+            _indexMapping = indexMapping == null ? new Dictionary<Type, string>() : indexMapping;
+
+            foreach (var mapping in _indexMapping)
+            {
+                _client.ConnectionSettings.IdProperties.TryAdd(mapping.Key, SearchablePropertyAttribute.GetKeyPropertyName(mapping.Key));
+            }
         }
 
         public async Task<SearchResult<ResultT>> Query<T, ResultT>(SearchRequest searchRequest, bool track = false)
@@ -37,13 +42,12 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
         {
             if (!_client.ConnectionSettings.IdProperties.ContainsKey(typeof(T)))
             {
-                _client.ConnectionSettings.IdProperties.Add(typeof(T), SearchableModelAttribute.GetKeyPropertyName<T>());
+                _client.ConnectionSettings.IdProperties.TryAdd(typeof(T), SearchablePropertyAttribute.GetKeyPropertyName<T>());
             }
 
-            var indexType = SearchableModelAttribute.GetIndexName(typeof(T));
-            var indexName = _indexMapping[indexType];
+            var indexName = _indexMapping[typeof(T)];
 
-            var facetProperties = SearchableModelAttribute.GetFacetableProperties<T>();
+            var facetProperties = SearchablePropertyAttribute.GetFacetableProperties<T>();
 
             var searchResponse = await _client.SearchAsync<ResultT>(s =>
             {
@@ -165,7 +169,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
         {
             QueryContainer result = null;
 
-            var properties = SearchableModelAttribute.GetSearchablePropertyNames<T>();
+            var properties = SearchablePropertyAttribute.GetSearchablePropertyNames<T>();
             var foldedProperties = new List<string>(properties.Select(p => p + ".folded"));
             properties.AddRange(foldedProperties);
 
@@ -390,7 +394,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
 
         private IHighlight ConstructHighlight<T>(HighlightDescriptor<T> highlightDescriptor) where T : class
         {
-            var searchableProperties = SearchableModelAttribute.GetSearchablePropertyNames<T>();
+            var searchableProperties = SearchablePropertyAttribute.GetSearchablePropertyNames<T>();
 
             Dictionary<Field, IHighlightField> fields = new Dictionary<Field, IHighlightField>();
 
@@ -426,7 +430,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
                 return "";
             }
 
-            bool isField = SearchableModelAttribute.GetPropertyNames<T>().Contains(filter.Value?.ToString() ?? string.Empty);
+            bool isField = SearchablePropertyAttribute.GetPropertyNames<T>().Contains(filter.Value?.ToString() ?? string.Empty);
 
             var filterOperator = "";
             switch (filter.Operator)
@@ -457,7 +461,7 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             }
             else
             {
-                switch (SearchableModelAttribute.GetPropertyPathTypeCode<T>(filter.PropertyName))
+                switch (SearchablePropertyAttribute.GetPropertyPathTypeCode<T>(filter.PropertyName))
                 {
                     case TypeCode.DateTime:
                         filterOperator = ":";

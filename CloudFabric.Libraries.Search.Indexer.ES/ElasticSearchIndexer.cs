@@ -45,45 +45,27 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
             await _client.Indices.DeleteAsync(indexName);
         }
 
-        public async Task<string> CreateIndex<T>(string forcedNewIndexName = null) where T : class
+        public async Task<string> CreateIndex<T>(string forcedNewIndexName) where T : class
         {
             try
             {
                 if (!_client.ConnectionSettings.IdProperties.ContainsKey(typeof(T)))
                 {
-                    _client.ConnectionSettings.IdProperties.Add(typeof(T), SearchableModelAttribute.GetKeyPropertyName<T>());
+                    _client.ConnectionSettings.IdProperties.Add(typeof(T), SearchablePropertyAttribute.GetKeyPropertyName<T>());
                 }
 
-                var newIndexName = forcedNewIndexName;
-                if (forcedNewIndexName == null)
+                if (string.IsNullOrWhiteSpace(forcedNewIndexName))
                 {
-                    var indexName = SearchableModelAttribute.GetIndexName(typeof(T));
-
-                    if (string.IsNullOrEmpty(indexName))
-                    {
-                        throw new Exception("Model class should have SearchableModelAttribute with indexName specified.");
-                    }
-
-                    string newIndexVersionSuffix = DateTime.Now.ToString("yyyyMMddHHmmss");
-
-                    newIndexName = indexName + "-" + newIndexVersionSuffix;
+                    throw new Exception($"Missing required parameter: {nameof(forcedNewIndexName)}");
                 }
 
                 var response = await _client.Indices.ExistsAsync(
-                    new IndexExistsRequest(newIndexName)
+                    new IndexExistsRequest(forcedNewIndexName)
                 );
 
-                if (response.Exists && forcedNewIndexName == null)
+                if (!response.Exists)
                 {
-                    await _client.Indices.DeleteAsync(
-                        new DeleteIndexRequest(newIndexName)
-                    );
-                    Console.WriteLine($"Deleted index " + newIndexName);
-                }
-
-                if (!response.Exists || forcedNewIndexName == null)
-                {
-                    var descriptor = new CreateIndexDescriptor(newIndexName)
+                    var descriptor = new CreateIndexDescriptor(forcedNewIndexName)
                         .Settings(s => s
                             .Analysis(analysis => analysis
                                 .Analyzers(analyzers => analyzers
@@ -122,11 +104,11 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
                     var createIndexResponse = await _client.Indices.CreateAsync(descriptor);
                     if (createIndexResponse.Acknowledged)
                     {
-                        Console.WriteLine($"Created index " + newIndexName);
+                        Console.WriteLine($"Created index " + forcedNewIndexName);
                     }
                     else
                     {
-                        var message = $"Index creation failed for index {newIndexName}. DebugInformation: ${createIndexResponse.DebugInformation}!";
+                        var message = $"Index creation failed for index {forcedNewIndexName}. DebugInformation: ${createIndexResponse.DebugInformation}!";
                         Console.WriteLine(message);
                         throw new Exception(message);
                     }
@@ -134,13 +116,13 @@ namespace CloudFabric.Libraries.Search.Indexer.ES
 
                 var properties = GetPropertiesDescriptors<T>();
 
-                var putMappingRequest = new PutMappingRequest(newIndexName)
+                var putMappingRequest = new PutMappingRequest(forcedNewIndexName)
                 {
                     Properties = properties
                 };
                 await _client.MapAsync(putMappingRequest);
-                Console.WriteLine($"Updated mapping for index " + newIndexName);
-                return newIndexName;
+                Console.WriteLine($"Updated mapping for index " + forcedNewIndexName);
+                return forcedNewIndexName;
             }
             catch (Exception ex)
             {                

@@ -14,9 +14,9 @@ namespace CloudFabric.Libraries.Search.Harvester.ES
         /// <summary>
         /// Allows remapping indexes stored on SearchAttributes to new names.
         /// </summary>
-        private Dictionary<string, string> _indexMapping;
+        private Dictionary<Type, string> _indexMapping;
 
-        public ElasticSearchUploader(string uri, string username, string password, Dictionary<string, string> indexMapping = null)
+        public ElasticSearchUploader(string uri, string username, string password, Dictionary<Type, string> indexMapping = null)
         {
             var _connectionSettings = new ConnectionSettings(new Uri(uri));
             _connectionSettings.BasicAuthentication(username, password);
@@ -24,22 +24,26 @@ namespace CloudFabric.Libraries.Search.Harvester.ES
 
             _client = new ElasticClient(_connectionSettings);
 
-            _indexMapping = indexMapping == null ? new Dictionary<string, string>() : indexMapping;
+            _indexMapping = indexMapping == null ? new Dictionary<Type, string>() : indexMapping;
+
+            foreach (var mapping in _indexMapping)
+            {
+                _client.ConnectionSettings.IdProperties.TryAdd(mapping.Key, SearchablePropertyAttribute.GetKeyPropertyName(mapping.Key));
+            }
         }
 
         public async Task<SearchUploadResult> Upload<T>(IEnumerable<T> records) where T : class
         {
             if (!_client.ConnectionSettings.IdProperties.ContainsKey(typeof(T)))
             {
-                _client.ConnectionSettings.IdProperties.Add(typeof(T), SearchableModelAttribute.GetKeyPropertyName<T>());
+                _client.ConnectionSettings.IdProperties.TryAdd(typeof(T), SearchablePropertyAttribute.GetKeyPropertyName<T>());
             }
 
             // We cannot just throw all 200k+ records to azure search, that causes out of memory and http payload too large exceptions.
             var recordsInOneStep = 1000;
             var totalRecords = records.Count();
 
-            var indexType = SearchableModelAttribute.GetIndexName(typeof(T));
-            var indexName = _indexMapping[indexType];
+            var indexName = _indexMapping[typeof(T)];
 
             var result = new SearchUploadResult()
             {

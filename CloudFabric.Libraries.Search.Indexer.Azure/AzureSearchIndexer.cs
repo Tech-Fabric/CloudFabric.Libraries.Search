@@ -39,15 +39,13 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
             throw new Exception("Not Implemented");
         }
 
-        public async Task<string> CreateIndex<T>(string forcedNewIndexName = null) where T : class
+        public async Task<string> CreateIndex<T>(string forcedNewIndexName) where T : class
         {
             try
             {
-                var indexName = SearchableModelAttribute.GetIndexName(typeof(T));
-
-                if (string.IsNullOrEmpty(indexName))
+                if (string.IsNullOrWhiteSpace(forcedNewIndexName))
                 {
-                    throw new Exception("Model class should have SearchableModelAttribute with indexName specified.");
+                    throw new Exception($"Missing required parameter: {nameof(forcedNewIndexName)}");
                 }
 
                 List<ScoringProfile> scoringProfiles = null;
@@ -57,35 +55,11 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
                 {
                     var existingIndexNames = await _serviceClient.Indexes.ListNamesAsync();
 
-                    var foundIndexName = "";
-                    long foundIndexVersion = 0;
-                    var indexMatcher = new Regex(indexName + "-(?<timestamp>\\d{12})+");
-                    // find last index 
-                    foreach (var existingIndexName in existingIndexNames)
-                    {
-                        var match = indexMatcher.Match(existingIndexName);
-
-                        if (match.Success)
-                        {
-                            var timestampGroup = new List<Group>(match.Groups).FirstOrDefault(g => g.Name == "timestamp");
-
-                            if (timestampGroup != null && timestampGroup.Success && timestampGroup.Value != null && timestampGroup.Value.Length > 0)
-                            {
-                                var version = long.Parse(timestampGroup.Value);
-
-                                if (version > foundIndexVersion)
-                                {
-                                    foundIndexName = existingIndexName;
-                                    foundIndexVersion = version;
-                                }
-                            }
-                        }
-                    }
+                    var foundIndexName = existingIndexNames.FirstOrDefault(x => x == forcedNewIndexName);
 
                     if (string.IsNullOrEmpty(foundIndexName))
                     {
-                        Console.WriteLine("Unable to find last index version for index: " + indexName + ". New index will be created.");
-                        foundIndexName = indexName;
+                        Console.WriteLine("Unable to find last index version for index: " + forcedNewIndexName + ". New index will be created.");
                     }
                     else
                     {
@@ -140,12 +114,9 @@ namespace CloudFabric.Libraries.Search.Indexer.Azure
                     }
                 }
 
-                string newIndexVersionSuffix = DateTime.Now.ToString("yyyyMMddHHmmss");
-                string newIndexName = indexName + "-" + newIndexVersionSuffix;
-
                 var definition = new Microsoft.Azure.Search.Models.Index()
                 {
-                    Name = newIndexName,
+                    Name = forcedNewIndexName,
                     Fields = fields,
                     Suggesters = suggesters,
                     ScoringProfiles = scoringProfiles,
