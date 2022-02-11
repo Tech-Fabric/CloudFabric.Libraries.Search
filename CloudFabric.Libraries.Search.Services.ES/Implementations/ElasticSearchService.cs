@@ -40,11 +40,6 @@ namespace CloudFabric.Libraries.Search.Services.ES.Implementations
             where T : class
             where ResultT: class
         {
-            if (!_client.ConnectionSettings.IdProperties.ContainsKey(typeof(T)))
-            {
-                _client.ConnectionSettings.IdProperties.TryAdd(typeof(T), SearchablePropertyAttribute.GetKeyPropertyName<T>());
-            }
-
             var indexName = _indexMapping[typeof(T)];
 
             var facetProperties = SearchablePropertyAttribute.GetFacetableProperties<T>();

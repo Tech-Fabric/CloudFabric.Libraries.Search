@@ -34,11 +34,6 @@ namespace CloudFabric.Libraries.Search.Harvester.ES
 
         public async Task<SearchUploadResult> Upload<T>(IEnumerable<T> records) where T : class
         {
-            if (!_client.ConnectionSettings.IdProperties.ContainsKey(typeof(T)))
-            {
-                _client.ConnectionSettings.IdProperties.TryAdd(typeof(T), SearchablePropertyAttribute.GetKeyPropertyName<T>());
-            }
-
             // We cannot just throw all 200k+ records to azure search, that causes out of memory and http payload too large exceptions.
             var recordsInOneStep = 1000;
             var totalRecords = records.Count();
