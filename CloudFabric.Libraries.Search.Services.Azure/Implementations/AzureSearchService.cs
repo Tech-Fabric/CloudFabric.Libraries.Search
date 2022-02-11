@@ -24,18 +24,18 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
         /// <summary>
         /// Allows remapping indexes stored on SearchAttributes to new names.
         /// </summary>
-        private ConcurrentDictionary<string, string> _indexMapping;
+        private ConcurrentDictionary<Type, string> _indexMapping;
 
         private Dictionary<string, string> _propertyShortCutMapping = new Dictionary<string, string>();
 
-        public AzureSearchService(string searchServiceName, string apiKey, ConcurrentDictionary<string, string> indexMapping = null, TelemetryClient telemetryClient = null)
+        public AzureSearchService(string searchServiceName, string apiKey, ConcurrentDictionary<Type, string> indexMapping = null, TelemetryClient telemetryClient = null)
         {
             _telemetryClient = telemetryClient;
             _searchClient = new SearchServiceClient(searchServiceName, new SearchCredentials(apiKey));
 
             if (indexMapping == null)
             {
-                _indexMapping = new ConcurrentDictionary<string, string>();
+                _indexMapping = new ConcurrentDictionary<Type, string>();
             }
             else
             {
@@ -116,7 +116,7 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
                 throw new Exception("Failed to get indexClient. Make sure index exists.");
             }
 
-            var facetProperties = SearchableModelAttribute.GetFacetableProperties<T>();
+            var facetProperties = SearchablePropertyAttribute.GetFacetableProperties<T>();
 
             List<string> facets = new List<string>();
 
@@ -286,13 +286,7 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
 
         private ISearchIndexClient GetIndexForModel<T>()
         {
-            var indexName = SearchableModelAttribute.GetIndexName(typeof(T));
-
-            if (_indexMapping.ContainsKey(indexName))
-            {
-                indexName = _indexMapping[indexName];
-            }
-
+            var indexName = _indexMapping[typeof(T)];
             ISearchIndexClient indexClient = null;
 
             if (_indexClients.ContainsKey(indexName))
@@ -402,7 +396,7 @@ namespace CloudFabric.Libraries.Search.Services.Azure.Implementations
             }
 
             var filterValue = "";
-            switch (SearchableModelAttribute.GetPropertyTypeCode<T>(propertyName))
+            switch (SearchablePropertyAttribute.GetPropertyTypeCode<T>(propertyName))
             {
                 case TypeCode.Decimal:
                 case TypeCode.Double:
