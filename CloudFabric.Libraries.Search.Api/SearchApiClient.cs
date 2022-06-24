@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -21,21 +20,10 @@ namespace CloudFabric.Libraries.Search.Api
             _baseAddress = baseAddress;
             _telemetryClient = telemetryClient;
 
-            if (httpClient != null)
-            {
-                _httpClient = httpClient;
-            }
-            else
-            {
-                _httpClient = new HttpClient();
-            }
+            _httpClient = httpClient ?? new HttpClient();
 
             _httpClient.BaseAddress = new Uri(_baseAddress);
-            var mediaType = new MediaTypeWithQualityHeaderValue("application/json");
-            if (!_httpClient.DefaultRequestHeaders.Accept.Contains(mediaType))
-            {
-                _httpClient.DefaultRequestHeaders.Accept.Add(mediaType);
-            }
+            _httpClient.DefaultRequestHeaders.Accept.TryParseAdd("application/json");
         }
 
         private async Task<string>
